@@ -4,11 +4,13 @@ erDiagram
   MATCHES ||--o{ TICKETS : "concerne"
   SEATS ||--o{ TICKETS : "vendue via"
   STADIUMS ||--|{ STANDS : "divisé en"
-  STANDS ||--|{ SEATS : "contient"
+  STANDS ||--|{ SECTORS : "découpée en blocs"
+  SEAT_CATEGORIES ||--o{ SECTORS : "classe"
+  SECTORS ||--|{ SEATS : "contient"
   STADIUMS ||--o{ MATCHES : "accueille"
   TEAMS ||--o{ MATCHES : "reçoit / se déplace"
-  MATCHES ||--|{ MATCH_STAND_PRICES : "fixe un tarif"
-  STANDS ||--o{ MATCH_STAND_PRICES : "est tarifée"
+  MATCHES ||--o{ MATCH_CATEGORY_PRICES : "fixe un tarif"
+  SEAT_CATEGORIES ||--o{ MATCH_CATEGORY_PRICES : "est tarifée"
   USERS {
     int id PK
     string email UK
@@ -36,28 +38,44 @@ erDiagram
     datetime kickoff_at
     string status
   }
-  SEATS {
-    int id PK
-    int stand_id FK
-    int row_number
-    int seat_number
-  }
-  STANDS {
-    int id PK
-    int stadium_id FK
-    string name
-  }
   STADIUMS {
     int id PK
     string name
     string city
   }
+  STANDS {
+    int id PK
+    int stadium_id FK
+    string name
+    string position
+  }
+  SECTORS {
+    int id PK
+    int stand_id FK
+    int category_id FK
+    string code
+    string tier
+    int position_index
+  }
+  SEAT_CATEGORIES {
+    int id PK
+    string code UK
+    string name
+    string color
+  }
+  SEATS {
+    int id PK
+    int sector_id FK
+    int row_number
+    int seat_number
+    bool is_accessible
+  }
   TEAMS {
     int id PK
     string name UK
   }
-  MATCH_STAND_PRICES {
+  MATCH_CATEGORY_PRICES {
     int match_id PK
-    int stand_id PK
+    int category_id PK
     int price_cents
   }

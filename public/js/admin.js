@@ -7,7 +7,7 @@ const form = document.getElementById('form-match');
 const stadiumSelect = document.getElementById('stade');
 const homeSelect = document.getElementById('domicile');
 const awaySelect = document.getElementById('exterieur');
-const pricesZone = document.getElementById('prix-tribunes');
+const pricesZone = document.getElementById('prix-categories');
 const matchesBody = document.getElementById('matchs-admin');
 const journalBody = document.getElementById('journal');
 const journalMessage = document.getElementById('journal-message');
@@ -26,10 +26,12 @@ function fillSelect(select, items, label) {
 
 function renderPrices() {
   const stadium = reference.stadiums.find((s) => String(s.id) === stadiumSelect.value);
-  pricesZone.replaceChildren(...(stadium?.stands || []).map((st) => el('div', { class: 'field' },
-    el('label', { for: `prix-${st.id}` }, `${st.name} (€)`),
-    el('input', { id: `prix-${st.id}`, name: `prix-${st.id}`, type: 'number', min: 0, max: 1000, step: '0.5',
-      inputmode: 'decimal', 'data-stand': st.id }))));
+  // One price per category. Left empty = not sold online for this match (e.g. away section).
+  pricesZone.replaceChildren(...(stadium?.categories || []).map((c) => el('div', { class: 'field' },
+    el('label', { for: `prix-${c.id}` }, `${c.name} (€)`),
+    el('input', { id: `prix-${c.id}`, name: `prix-${c.id}`, type: 'number', min: 0, max: 5000, step: '0.5',
+      inputmode: 'decimal', 'data-category': c.id, 'aria-describedby': 'aide-prix' }),
+    el('span', { class: 'aide' }, `${c.sectors} bloc${c.sectors > 1 ? 's' : ''}`))));
 }
 
 async function changeStatus(match, status, button) {
@@ -89,9 +91,9 @@ form.addEventListener('submit', async (e) => {
   e.preventDefault();
   const prices = [...pricesZone.querySelectorAll('input')]
     .filter((i) => i.value !== '')
-    .map((i) => ({ standId: Number(i.dataset.stand), priceCents: Math.round(Number(i.value) * 100) }));
+    .map((i) => ({ categoryId: Number(i.dataset.category), priceCents: Math.round(Number(i.value) * 100) }));
   if (prices.length === 0) {
-    showMessage(message, 'Indiquez le prix d’au moins une tribune.', 'erreur');
+    showMessage(message, 'Indiquez le prix d’au moins une catégorie.', 'erreur');
     return;
   }
   const kickoff = document.getElementById('coup-envoi').value;

@@ -11,7 +11,7 @@ const { notFound, conflict, unprocessable } = require('../utils/errors');
  *
  * Business rules (see docs/01-cahier-des-besoins.md):
  *  RG1 the match must be on sale and not started
- *  RG2 each seat must exist, belong to the stadium and have a price for this match
+ *  RG2 each seat must exist, belong to the stadium and its category must have a price for this match
  *  RG3 a seat can be sold only once per match (enforced by the DATABASE)
  *  RG4 the order is all-or-nothing (transaction)
  *  RG5 at most N seats per order (validated before, see Joi schema)
@@ -48,7 +48,10 @@ async function createOrder(user, { matchId, seatIds }) {
       createdAt: result.order.createdAt,
       tickets: result.tickets.map((t) => {
         const seat = result.seats.find((s) => s.seatId === t.seatId);
-        return { id: t.id, matchId, standName: seat.standName, row: seat.row, number: seat.number, priceCents: t.priceCents };
+        return {
+          id: t.id, matchId, standName: seat.standName, sectorCode: seat.sectorCode, sectorName: seat.sectorName,
+          categoryName: seat.categoryName, row: seat.row, number: seat.number, priceCents: t.priceCents,
+        };
       }),
     };
   } catch (err) {

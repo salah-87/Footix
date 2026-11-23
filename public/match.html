@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Choisir mes places | Footix</title>
-  <meta name="description" content="Choisissez votre tribune et vos places numérotées.">
+  <meta name="description" content="Choisissez votre bloc, votre catégorie et vos places numérotées.">
   <link rel="preload" href="/fonts/archivo-variable.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="preload" href="/fonts/fraunces-variable.woff2" as="font" type="font/woff2" crossorigin>
   <meta name="theme-color" content="#0b1f4b">
@@ -33,28 +33,42 @@
     <div class="wrap">
       <div id="entete" class="match-entete"></div>
       <p id="message" class="message" role="status" tabindex="-1"></p>
-      <div id="achat" class="match-grille" hidden>
-        <section aria-labelledby="titre-tribune">
-          <h2 id="titre-tribune">Choisissez une tribune</h2>
-          <p>Le prix et le nombre de places libres sont indiqués sur chaque tribune.</p>
-          <div id="plan-stade"></div>
-        </section>
-        <section aria-labelledby="titre-sieges">
-          <h2 id="titre-sieges">Choisissez vos places</h2>
-          <ul class="legende" aria-label="Légende">
-            <li><span class="pastille libre" aria-hidden="true"></span>Libre</li>
-            <li><span class="pastille choisie" aria-hidden="true"></span>Votre choix</li>
-            <li><span class="pastille vendue" aria-hidden="true"></span>Vendue</li>
-          </ul>
-          <div id="sieges"><p class="vide">Sélectionnez d’abord une tribune sur le plan.</p></div>
-          <div class="panier">
-            <div>
-              <p class="resume" id="resume" aria-live="polite">Aucune place choisie.</p>
+      <div id="achat" hidden>
+        <div class="zone-plan">
+          <section aria-labelledby="titre-plan">
+            <h2 id="titre-plan">Choisissez un bloc</h2>
+            <p>Chaque bloc prend la couleur de sa catégorie. Les blocs hachurés ne sont pas vendus en ligne.</p>
+            <div id="plan-stade" class="plan-stade"></div>
+          </section>
+          <section class="categories" aria-labelledby="titre-categories">
+            <h2 id="titre-categories">Catégories et tarifs</h2>
+            <p id="aide-categories">Choisissez une catégorie pour ne voir que ses blocs sur le plan.</p>
+            <ul id="liste-categories" class="liste-categories"></ul>
+            <p id="info-pmr" class="info-pmr"></p>
+          </section>
+        </div>
+        <div class="zone-places">
+          <section aria-labelledby="titre-sieges">
+            <h2 id="titre-sieges" tabindex="-1">Choisissez vos places</h2>
+            <p id="info-bloc" class="info-bloc"></p>
+            <ul class="legende" aria-label="Légende">
+              <li><span class="pastille libre" aria-hidden="true"></span>Libre</li>
+              <li><span class="pastille choisie" aria-hidden="true"></span>Votre choix</li>
+              <li><span class="pastille vendue" aria-hidden="true"></span>Vendue</li>
+              <li><span class="pastille pmr" aria-hidden="true"></span>Place PMR (fauteuil)</li>
+            </ul>
+            <div id="sieges"><p class="vide">Sélectionnez d’abord un bloc sur le plan.</p></div>
+          </section>
+          <aside class="panier" aria-labelledby="titre-panier">
+            <h2 id="titre-panier">Votre sélection</h2>
+            <p class="resume" id="resume" aria-live="polite">Aucune place choisie.</p>
+            <ul class="lignes" id="lignes"></ul>
+            <div class="pied">
               <p class="total" id="total">0,00 €</p>
+              <button type="button" class="btn" id="acheter" disabled>Acheter</button>
             </div>
-            <button type="button" class="btn" id="acheter" disabled>Acheter</button>
-          </div>
-        </section>
+          </aside>
+        </div>
       </div>
     </div>
   </main>

@@ -12,7 +12,7 @@ async function listOnSale(db = pool) {
     JOIN teams home    ON home.id = m.home_team_id
     JOIN teams away    ON away.id = m.away_team_id
     JOIN stadiums sd   ON sd.id = m.stadium_id
-    LEFT JOIN match_stand_prices p ON p.match_id = m.id
+    LEFT JOIN match_category_prices p ON p.match_id = m.id
     WHERE m.status = 'on_sale' AND m.kickoff_at > now()
     GROUP BY m.id, home.name, away.name, sd.name, sd.city
     ORDER BY m.kickoff_at`);
@@ -42,38 +42,90 @@ async function findDetails(id, db = pool) {
   return rows[0] || null;
 }
 
-/** For each stand: price, capacity, number of tickets already sold. */
-async function getStandAvailability(matchId, db = pool) {
+/**
+ * Price categories of the stadium of a match, with the price for THIS match
+ * (null = not sold online) and the number of seats left.
+ */
+async function getCategoryAvailability(matchId, db = pool) {
   const { rows } = await db.query(
-    `SELECT s.id AS "standId", s.name, p.price_cents AS "priceCents",
-            (SELECT count(*) FROM seats se WHERE se.stand_id = s.id)::int AS capacity,
-            (SELECT count(*) FROM tickets t JOIN seats se ON se.id = t.seat_id
-              WHERE t.match_id = $1 AND se.stand_id = s.id)::int AS sold
-     FROM match_stand_prices p
-     JOIN stands s ON s.id = p.stand_id
-     WHERE p.match_id = $1
-     ORDER BY s.id`, [matchId]);
+    `SELECT c.id AS "categoryId", c.code, c.name, c.description, c.color,
+            p.price_cents AS "priceCents",
+            count(s.id)::int AS capacity,
+            count(t.id)::int AS sold
+     FROM matches m
+     JOIN stands st          ON st.stadium_id = m.stadium_id
+     JOIN sectors se         ON se.stand_id = st.id
+     JOIN seat_categories c  ON c.id = se.category_id
+     JOIN seats s            ON s.sector_id = se.id
+     LEFT JOIN match_category_prices p ON p.match_id = m.id AND p.category_id = c.id
+     LEFT JOIN tickets t     ON t.seat_id = s.id AND t.match_id = m.id
+     WHERE m.id = $1
+     GROUP BY c.id, p.price_cents
+     ORDER BY c.sort_order, c.id`, [matchId]);
   return rows;
 }
 
-/** Seat map of one stand for one match: each seat is free or sold. */
-async function getSeatMap(matchId, standId, db = pool) {
+/** Every sector of the stadium, grouped later by stand, with what is left for this match. */
+async function getSectorAvailability(matchId, db = pool) {
   const { rows } = await db.query(
-    `SELECT se.id AS "seatId", se.row_number AS "row", se.seat_number AS "number",
-            (t.id IS NOT NULL) AS sold
-     FROM seats se
-     JOIN match_stand_prices p ON p.stand_id = se.stand_id AND p.match_id = $1
-     LEFT JOIN tickets t ON t.seat_id = se.id AND t.match_id = $1
-     WHERE se.stand_id = $2
-     ORDER BY se.row_number, se.seat_number`, [matchId, standId]);
+    `SELECT st.id AS "standId", st.name AS "standName", st.position,
+            se.id AS "sectorId", se.code, se.name, se.tier, se.position_index AS "positionIndex",
+            se.category_id AS "categoryId",
+            (p.price_cents IS NOT NULL) AS "onSale",
+            count(s.id)::int AS capacity,
+            count(t.id)::int AS sold,
+            count(s.id) FILTER (WHERE s.is_accessible AND t.id IS NULL)::int AS "accessibleFree"
+     FROM matches m
+     JOIN stands st   ON st.stadium_id = m.stadium_id
+     JOIN sectors se  ON se.stand_id = st.id
+     JOIN seats s     ON s.sector_id = se.id
+     LEFT JOIN match_category_prices p ON p.match_id = m.id AND p.category_id = se.category_id
+     LEFT JOIN tickets t ON t.seat_id = s.id AND t.match_id = m.id
+     WHERE m.id = $1
+     GROUP BY st.id, se.id, p.price_cents
+     ORDER BY st.id, se.tier, se.position_index`, [matchId]);
   return rows;
 }
 
-/** Which of these stands belong to the stadium? (consistency check for prices) */
-async function countStandsOfStadium(stadiumId, standIds, db = pool) {
+/**
+ * One sector for one match, ONLY if it is in the match's stadium and its category
+ * has a price for this match. null otherwise (not sold online).
+ */
+async function findSectorForMatch(matchId, sectorId, db = pool) {
   const { rows } = await db.query(
-    `SELECT count(*)::int AS n FROM stands WHERE stadium_id = $1 AND id = ANY($2::int[])`,
-    [stadiumId, standIds]);
+    `SELECT se.id AS "sectorId", se.code, se.name, se.tier,
+            st.name AS "standName", st.position,
+            c.id AS "categoryId", c.code AS "categoryCode", c.name AS "categoryName",
+            c.description AS "categoryDescription", c.color AS "categoryColor",
+            p.price_cents AS "priceCents"
+     FROM sectors se
+     JOIN stands st ON st.id = se.stand_id
+     JOIN matches m ON m.id = $1 AND m.stadium_id = st.stadium_id
+     JOIN seat_categories c ON c.id = se.category_id
+     JOIN match_category_prices p ON p.match_id = m.id AND p.category_id = c.id
+     WHERE se.id = $2`, [matchId, sectorId]);
+  return rows[0] || null;
+}
+
+/** Seat map of one sector for one match: each seat is free or sold. */
+async function getSeatMap(matchId, sectorId, db = pool) {
+  const { rows } = await db.query(
+    `SELECT s.id AS "seatId", s.row_number AS "row", s.seat_number AS "number",
+            s.is_accessible AS accessible, (t.id IS NOT NULL) AS sold
+     FROM seats s
+     LEFT JOIN tickets t ON t.seat_id = s.id AND t.match_id = $1
+     WHERE s.sector_id = $2
+     ORDER BY s.row_number, s.seat_number`, [matchId, sectorId]);
+  return rows;
+}
+
+/** How many of these categories are used by at least one sector of the stadium? */
+async function countCategoriesOfStadium(stadiumId, categoryIds, db = pool) {
+  const { rows } = await db.query(
+    `SELECT count(DISTINCT se.category_id)::int AS n
+     FROM sectors se JOIN stands st ON st.id = se.stand_id
+     WHERE st.stadium_id = $1 AND se.category_id = ANY($2::int[])`,
+    [stadiumId, categoryIds]);
   return rows[0].n;
 }
 
@@ -100,10 +152,10 @@ async function insert({ stadiumId, homeTeamId, awayTeamId, kickoffAt, status }, 
 /** Inserts all the prices in one query using unnest on two parallel arrays. */
 async function insertPrices(matchId, prices, db = pool) {
   await db.query(
-    `INSERT INTO match_stand_prices (match_id, stand_id, price_cents)
-     SELECT $1, p.stand_id, p.price_cents
-     FROM unnest($2::int[], $3::int[]) AS p(stand_id, price_cents)`,
-    [matchId, prices.map((p) => p.standId), prices.map((p) => p.priceCents)]);
+    `INSERT INTO match_category_prices (match_id, category_id, price_cents)
+     SELECT $1, p.category_id, p.price_cents
+     FROM unnest($2::int[], $3::int[]) AS p(category_id, price_cents)`,
+    [matchId, prices.map((p) => p.categoryId), prices.map((p) => p.priceCents)]);
 }
 
 async function update(id, { kickoffAt, status }, db = pool) {
@@ -132,12 +184,19 @@ async function listAll(db = pool) {
   return rows;
 }
 
-/** Admin: stadiums with their stands, and teams (to fill the "create a match" form). */
+/** Admin: stadiums with the price categories they contain, and teams (for the "create a match" form). */
 async function getReference(db = pool) {
   const stadiums = await db.query(`
     SELECT sd.id, sd.name, sd.city,
-           json_agg(json_build_object('id', st.id, 'name', st.name) ORDER BY st.id) AS stands
-    FROM stadiums sd JOIN stands st ON st.stadium_id = sd.id
+           json_agg(json_build_object('id', c.id, 'code', c.code, 'name', c.name, 'color', c.color,
+                                      'sectors', c.sectors)
+                    ORDER BY c.sort_order) AS categories
+    FROM stadiums sd
+    JOIN LATERAL (
+      SELECT c.id, c.code, c.name, c.color, c.sort_order, count(*)::int AS sectors
+      FROM stands st JOIN sectors se ON se.stand_id = st.id JOIN seat_categories c ON c.id = se.category_id
+      WHERE st.stadium_id = sd.id
+      GROUP BY c.id) c ON true
     GROUP BY sd.id ORDER BY sd.name`);
   const teams = await db.query(`SELECT id, name, city FROM teams ORDER BY name`);
   return { stadiums: stadiums.rows, teams: teams.rows };
@@ -145,6 +204,6 @@ async function getReference(db = pool) {
 
 module.exports = {
   listAll, getReference,
-  listOnSale, findById, findDetails, getStandAvailability, getSeatMap,
-  countStandsOfStadium, teamsExist, stadiumExists, insert, insertPrices, update,
+  listOnSale, findById, findDetails, getCategoryAvailability, getSectorAvailability,
+  findSectorForMatch, getSeatMap, countCategoriesOfStadium, teamsExist, stadiumExists, insert, insertPrices, update,
 };

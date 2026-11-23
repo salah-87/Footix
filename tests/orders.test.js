@@ -28,13 +28,43 @@ describe('Public catalogue', () => {
     expect((await request(app).get('/api/matches/2')).status).toBe(404);
   });
 
-  test('match details give price, capacity and availability per stand', async () => {
+  test('match details give price, capacity and availability per category', async () => {
     const res = await request(app).get('/api/matches/1');
     expect(res.status).toBe(200);
-    expect(res.body.stands).toEqual([
-      expect.objectContaining({ name: 'Nord', priceCents: 1000, capacity: 10, sold: 0, available: 10 }),
-      expect.objectContaining({ name: 'Sud', priceCents: 2500, capacity: 4, sold: 0, available: 4 }),
+    // ordered like the ticket office: VIP first; the away section has no price
+    expect(res.body.categories).toEqual([
+      expect.objectContaining({ code: 'VIP', priceCents: 2500, capacity: 4, sold: 0, available: 4, onSale: true }),
+      expect.objectContaining({ code: 'CAT1', priceCents: 1000, capacity: 10, sold: 0, available: 10, onSale: true }),
+      expect.objectContaining({ code: 'VISIT', priceCents: null, onSale: false, available: 0 }),
     ]);
+  });
+
+  test('match details describe the stadium: stands, then sectors with their category', async () => {
+    const res = await request(app).get('/api/matches/1');
+    expect(res.body.stands.map((s) => [s.name, s.position])).toEqual([['Nord', 'nord'], ['Sud', 'sud'], ['Est', 'est']]);
+    const n1 = res.body.stands[0].sectors[0];
+    expect(n1).toEqual(expect.objectContaining({
+      code: 'N1', tier: 'bas', categoryId: 1, onSale: true, capacity: 10, available: 10, accessibleFree: 1,
+    }));
+    expect(res.body.stands[2].sectors[0]).toEqual(expect.objectContaining({ code: 'E2', onSale: false, available: 0 }));
+  });
+
+  test('the seat map of a sector gives its category, its price and the PMR seats', async () => {
+    const res = await request(app).get('/api/matches/1/sectors/1/seats');
+    expect(res.status).toBe(200);
+    expect(res.body.sector).toEqual(expect.objectContaining({ code: 'N1', categoryCode: 'CAT1', priceCents: 1000, standName: 'Nord' }));
+    expect(res.body.seats).toHaveLength(10);
+    expect(res.body.seats.filter((s) => s.accessible).map((s) => s.seatId)).toEqual([1]);
+  });
+
+  test.each([
+    ['a sector whose category is not sold online', '/api/matches/1/sectors/3/seats'],
+    ['a sector of another stadium', '/api/matches/1/sectors/4/seats'],
+    ['a sector that does not exist', '/api/matches/1/sectors/999/seats'],
+  ])('refuses the seat map of %s (404)', async (_label, url) => {
+    const res = await request(app).get(url);
+    expect(res.status).toBe(404);
+    expect(res.body.error.code).toBe('SECTOR_NOT_FOUND');
   });
 
   test('a non-numeric id is rejected by validation', async () => {
@@ -55,6 +85,10 @@ describe('Buying tickets', () => {
     expect(res.status).toBe(201);
     expect(res.body.totalCents).toBe(1000 + 2500);
     expect(res.body.tickets).toHaveLength(2);
+    expect(res.body.tickets).toEqual(expect.arrayContaining([
+      expect.objectContaining({ sectorCode: 'N1', categoryName: 'Catégorie 1', row: 1, number: 1, priceCents: 1000 }),
+      expect.objectContaining({ sectorCode: 'L1', categoryName: 'Hospitalité VIP', priceCents: 2500 }),
+    ]));
     const owner = await pool.query('SELECT user_id FROM orders WHERE id = $1', [res.body.id]);
     expect(owner.rows[0].user_id).toBe(1); // taken from the token, not from the body (userId: 4 ignored)
     expect(spy).toHaveBeenCalledWith('order.created', expect.objectContaining({ id: 1 }), expect.any(Object));
@@ -65,9 +99,11 @@ describe('Buying tickets', () => {
     const mine = await request(app).get('/api/orders/me').set(auth(fan));
     expect(mine.status).toBe(200);
     expect(mine.body).toHaveLength(1);
-    const map = await request(app).get('/api/matches/1/stands/1/seats');
-    expect(map.body.find((s) => s.seatId === 1).sold).toBe(true);
-    expect(map.body.find((s) => s.seatId === 2).sold).toBe(false);
+    const map = await request(app).get('/api/matches/1/sectors/1/seats');
+    expect(map.body.seats.find((s) => s.seatId === 1).sold).toBe(true);
+    expect(map.body.seats.find((s) => s.seatId === 2).sold).toBe(false);
+    const details = await request(app).get('/api/matches/1');
+    expect(details.body.stands[0].sectors[0]).toEqual(expect.objectContaining({ available: 9, accessibleFree: 0 }));
   });
 
   test('another user cannot buy a seat that is already sold', async () => {
@@ -85,7 +121,7 @@ describe('Buying tickets', () => {
   });
 
   test.each([
-    ['a seat of a stand with no price for this match', { matchId: 1, seatIds: [15] }],
+    ['a seat of the away section (category with no price)', { matchId: 1, seatIds: [15] }],
     ['a seat of another stadium', { matchId: 1, seatIds: [17] }],
     ['a seat that does not exist', { matchId: 1, seatIds: [99999] }],
   ])('rejects %s with 422', async (_label, body) => {

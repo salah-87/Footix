@@ -37,10 +37,18 @@ async function main() {
 
   try {
     const details = await api(`/matches/${next.id}`);
-    const stade = buildStadium(details.stands);
+    const stade = buildStadium(details, {
+      title: `Plan du ${details.stadium} : quatre tribunes découpées en blocs, colorés par catégorie`,
+    });
     if (stade) {
+      // Legend: one line per category sold online, with its price for this match
+      const legende = el('ul', { class: 'legende-cat' }, ...details.categories.filter((c) => c.onSale).map((c) => {
+        const pastille = el('span', { class: 'pastille-cat', 'aria-hidden': 'true' });
+        if (/^#[0-9a-f]{6}$/i.test(c.color)) pastille.style.setProperty('--cat', c.color);
+        return el('li', {}, pastille, el('span', {}, c.name), el('span', { class: 'prix' }, euros(c.priceCents)));
+      }));
       affiche.append(el('figure', { class: 'plan' }, stade,
-        el('figcaption', { class: 'visually-hidden' }, 'Places restantes par tribune')));
+        el('figcaption', {}, legende)));
     }
   } catch { /* the poster works without the stadium view */ }
 

@@ -25,8 +25,8 @@ Atomicité (tout ou rien), Cohérence (les contraintes sont respectées), Isolat
 **5. Pourquoi stocker les prix en centimes ?**
 Les nombres décimaux provoquent des erreurs d'arrondi (0,1 + 0,2 ≠ 0,3 en informatique). Les entiers sont exacts.
 
-**6. Pourquoi une table `match_stand_prices` ?**
-Le prix dépend à la fois du match ET de la tribune : c'est une association plusieurs-à-plusieurs avec un attribut. Mettre le prix dans `stands` ou `matches` serait faux (3e forme normale).
+**6. Pourquoi une table `match_category_prices` ?**
+Le prix dépend à la fois du match ET de la catégorie : c'est une association plusieurs-à-plusieurs avec un attribut. Mettre le prix dans `seat_categories` ou `matches` serait faux (3e forme normale). Comme dans les grands clubs, la même Catégorie 1 coûte 45 € contre Bordeaux et 38 € contre Creuse.
 
 **7. Pourquoi `tickets.price_cents` alors que le prix existe déjà ailleurs ?**
 Pour garder le prix payé : si le tarif change, l'historique reste juste. C'est une redondance volontaire.
@@ -107,7 +107,7 @@ Les ventes continuent : les fonctions de journalisation avalent leurs erreurs. U
 ---
 ## E. Tests
 **31. Qu'as-tu testé ?**
-87 tests automatisés : authentification, validation, achat, concurrence, scan, rôles, en-têtes HTTP, limitation, journaux MongoDB, pages et CSP. Couverture de 91 % du code serveur. En plus, un parcours complet dans un vrai navigateur et un audit d'accessibilité.
+94 tests automatisés : authentification, validation, achat, concurrence, scan, rôles, en-têtes HTTP, limitation, journaux MongoDB, pages et CSP. Couverture de 91 % du code serveur. En plus, un parcours complet dans un vrai navigateur et un audit d'accessibilité.
 
 **32. Comment prouves-tu qu'il n'y a pas de double vente ?**
 Un test lance **15 achats simultanés** de la même place : exactement un réussit, 14 reçoivent 409, et la base ne contient qu'un seul billet.
@@ -153,7 +153,7 @@ Après connexion, la page renvoie vers l'adresse donnée dans `?retour=`. Un att
 Non : c'est du confort. Le serveur revérifie le rôle à chaque requête (403 sinon). Tout ce qui est côté navigateur peut être modifié par l'utilisateur.
 
 **44. Comment as-tu vérifié l'accessibilité ?**
-Boutons et libellés réels (`button`, `label`), `aria-pressed` sur les sièges et les tribunes, `aria-label` qui lit « Rang 3, place 12, vendue », zone `aria-live` pour le panier et le verdict du contrôle, focus visible, lien d'évitement. Audit **axe-core : aucune violation WCAG 2.1 AA** sur les 6 pages.
+Boutons et libellés réels (`button`, `label`), `aria-pressed` sur les sièges, les blocs du plan et les catégories, `aria-label` qui lit « Rang 3, place 12, vendue », zone `aria-live` pour le panier et le verdict du contrôle, focus visible, lien d'évitement. Audit **axe-core : aucune violation WCAG 2.1 AA** sur les 6 pages.
 
 **45. Comment le contrôleur scanne-t-il un QR code ?**
 Un lecteur de QR code USB se comporte comme un clavier : il tape le code puis Entrée dans le champ, qui garde le focus. Sur mobile compatible, un bouton utilise la caméra (`BarcodeDetector`) : c'est une amélioration progressive, la saisie reste possible partout.
@@ -163,3 +163,24 @@ Un lecteur de QR code USB se comporte comme un clavier : il tape le code puis En
 - **« Quelles sont les limites de ton projet ? »** Pas de paiement réel, pas de révocation de jeton, limitation de débit en mémoire. Je les connais et je sais comment les améliorer (voir `docs/04-securite-et-tests.md`).
 - **« Qu'est-ce que tu ferais avec plus de temps ? »** Remboursement, réservation temporaire de 10 minutes, jetons de rafraîchissement, e-mails de confirmation, Redis pour la limitation de débit.
 - **« Tu as utilisé une IA ? »** Dis la vérité : tu as utilisé un assistant pour concevoir et apprendre, et tu es capable d'expliquer chaque ligne (c'est ce que cette fiche prépare).
+
+
+## Le plan du stade (catégories, blocs, VIP, PMR)
+
+**46. Comment le stade est-il découpé ?**
+Comme les billetteries des grands clubs : stade → 4 tribunes → 31 blocs (anneau bas, loges, anneau haut) → places numérotées par rang. Chaque bloc a une catégorie : Hospitalité VIP (loges de la tribune présidentielle), Catégorie 1 (centre, anneau bas), Catégorie 2, Catégorie 3, Virage Kop (derrière le but Ouest), Parcage visiteurs (virage Est).
+
+**47. Pourquoi la catégorie est sur le bloc et pas sur la place ?**
+Toutes les places d'un bloc ont la même catégorie. La mettre sur chaque place la répéterait des centaines de fois : redondance, risque d'incohérence. C'est la 3e forme normale.
+
+**48. Comment le parcage visiteurs n'est-il pas vendu ?**
+Il n'a simplement pas de prix pour le match. La requête qui cherche les places vendables fait une jointure sur `match_category_prices` : sans prix, la place n'est pas trouvée, l'achat renvoie `422 INVALID_SEATS` et le plan du bloc renvoie `404 SECTOR_NOT_FOUND`. Aucune condition spéciale dans le code : c'est la donnée qui décide.
+
+**49. Comment est dessiné le plan ?**
+En SVG, créé en JavaScript avec `createElementNS` (jamais `innerHTML`). Chaque bloc est un polygone calculé : il s'éloigne du terrain et s'élargit à chaque anneau, comme une cuvette. La couleur vient de la catégorie, vérifiée par une expression régulière `#rrggbb` côté client et par une contrainte `CHECK` en base.
+
+**50. Le plan est-il accessible ?**
+Chaque bloc vendable a `role="button"`, `tabindex="0"`, un `aria-label` complet (« Bloc N3, Tribune Nord, anneau bas, Catégorie 1, 45 € la place, 112 places libres, dont 2 PMR ») et réagit à Entrée et Espace. Les blocs non vendus ont `aria-disabled`. Après le choix d'un bloc, le focus passe au titre de la liste des places. Les places PMR sont annoncées « place PMR pour fauteuil roulant ». axe-core : aucune violation.
+
+**51. Pourquoi la couleur passe par `style.setProperty` alors que la CSP interdit les styles en ligne ?**
+La CSP bloque les attributs `style="…"` écrits dans le HTML. Modifier une propriété CSS en JavaScript (CSSOM) n'est pas concerné. La valeur est de toute façon contrôlée avant (format `#rrggbb`).

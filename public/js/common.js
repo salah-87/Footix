@@ -47,7 +47,7 @@ const MESSAGES = {
   INVALID_TOKEN: 'Votre session a expiré. Connectez-vous à nouveau.',
   FORBIDDEN: 'Votre compte ne donne pas accès à cette page.',
   MATCH_NOT_FOUND: 'Ce match n’est pas en vente.',
-  STAND_NOT_FOUND: 'Cette tribune n’est pas ouverte pour ce match.',
+  SECTOR_NOT_FOUND: 'Ce bloc n’est pas vendu en ligne pour ce match.',
   MATCH_NOT_ON_SALE: 'La vente n’est pas ouverte pour ce match.',
   MATCH_ALREADY_STARTED: 'Ce match a déjà commencé : la vente est fermée.',
   SEAT_ALREADY_SOLD: 'Une de vos places vient d’être achetée par quelqu’un d’autre. Le plan est à jour : choisissez-en une autre.',
@@ -56,7 +56,7 @@ const MESSAGES = {
   SAME_TEAM: 'Une équipe ne peut pas jouer contre elle-même.',
   UNKNOWN_TEAM: 'Une des équipes n’existe pas.',
   UNKNOWN_STADIUM: 'Ce stade n’existe pas.',
-  INVALID_STAND: 'Une tribune ne fait pas partie de ce stade.',
+  INVALID_CATEGORY: 'Une des catégories n’existe pas dans ce stade.',
   INVALID_TRANSITION: 'Ce changement de statut n’est pas possible.',
   MATCH_CANCELLED: 'Ce match est annulé.',
   LOGS_UNAVAILABLE: 'Le journal est indisponible : MongoDB n’est pas démarré.',
@@ -158,13 +158,6 @@ export function requireLogin() {
     return null;
   }
   return session;
-}
-
-/** Finds where a stand sits around the pitch from its name. */
-export function positionTribune(name) {
-  // Whole words only: "Ouest" contains the letters "est" and must not be placed East.
-  const match = name.toLowerCase().match(/\b(nord|sud|est|ouest)\b/);
-  return match ? match[1] : null;
 }
 
 /**

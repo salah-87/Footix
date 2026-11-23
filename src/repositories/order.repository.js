@@ -10,17 +10,21 @@ async function insertOrder(userId, totalCents, db = pool) {
 }
 
 /**
- * Seats that exist, belong to the stadium of the match AND have a price for this match.
+ * Seats that exist, belong to the stadium of the match AND whose category has a price
+ * for this match.
  * If a requested seat is missing from the result, it is not sellable for this match.
  */
 async function findSellableSeats(matchId, seatIds, db = pool) {
   const { rows } = await db.query(
     `SELECT se.id AS "seatId", se.row_number AS "row", se.seat_number AS "number",
-            st.name AS "standName", p.price_cents AS "priceCents"
+            st.name AS "standName", sc.code AS "sectorCode", sc.name AS "sectorName",
+            c.name AS "categoryName", p.price_cents AS "priceCents"
      FROM seats se
-     JOIN stands st ON st.id = se.stand_id
-     JOIN matches m ON m.id = $1 AND m.stadium_id = st.stadium_id
-     JOIN match_stand_prices p ON p.match_id = m.id AND p.stand_id = st.id
+     JOIN sectors sc ON sc.id = se.sector_id
+     JOIN stands st  ON st.id = sc.stand_id
+     JOIN matches m  ON m.id = $1 AND m.stadium_id = st.stadium_id
+     JOIN seat_categories c ON c.id = sc.category_id
+     JOIN match_category_prices p ON p.match_id = m.id AND p.category_id = c.id
      WHERE se.id = ANY($2::int[])`,
     [matchId, seatIds]);
   return rows;

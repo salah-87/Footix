@@ -16,7 +16,7 @@ Puis ouvrir **http://localhost:3000** dans le navigateur.
 | Page | Adresse | Pour qui |
 |---|---|---|
 | Matchs en vente | `/` | Tout le monde |
-| Choix de la tribune et des places | `/match?id=1` | Tout le monde (achat : connecté) |
+| Plan du stade (blocs, catégories, VIP, PMR) et choix des places | `/match?id=1` | Tout le monde (achat : connecté) |
 | Connexion, inscription | `/connexion` | Visiteurs |
 | Mes billets et QR codes | `/billets` | Spectateurs |
 | Contrôle à l'entrée | `/controle` | Contrôleurs, administrateurs |
@@ -44,7 +44,7 @@ curl -s localhost:3000/api/tickets/1/qr -H "Authorization: Bearer $TOKEN"
 ## Tests
 ```bash
 npm test                                   # 82 tests (PostgreSQL, base footix_test)
-MONGO_TEST_URL=mongodb://localhost:27017/footix_test npm test   # + 5 tests MongoDB = 87
+MONGO_TEST_URL=mongodb://localhost:27017/footix_test npm test   # + 5 tests MongoDB = 94
 ```
 
 ## Sauvegarde / restauration

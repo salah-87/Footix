@@ -20,14 +20,18 @@ const SELECT_FOR_USER = `
   SELECT t.id, t.status, t.price_cents AS "priceCents",
          m.id AS "matchId", m.kickoff_at AS "kickoffAt", m.status AS "matchStatus",
          home.name AS "homeTeam", away.name AS "awayTeam",
-         st.name AS "standName", se.row_number AS "row", se.seat_number AS "number"
+         st.name AS "standName", sc.code AS "sectorCode", sc.name AS "sectorName",
+         c.code AS "categoryCode", c.name AS "categoryName",
+         se.row_number AS "row", se.seat_number AS "number", se.is_accessible AS accessible
   FROM tickets t
   JOIN orders o     ON o.id = t.order_id
   JOIN matches m    ON m.id = t.match_id
   JOIN teams home   ON home.id = m.home_team_id
   JOIN teams away   ON away.id = m.away_team_id
   JOIN seats se     ON se.id = t.seat_id
-  JOIN stands st    ON st.id = se.stand_id`;
+  JOIN sectors sc   ON sc.id = se.sector_id
+  JOIN stands st    ON st.id = sc.stand_id
+  JOIN seat_categories c ON c.id = sc.category_id`;
 
 async function listByUser(userId, db = pool) {
   const { rows } = await db.query(`${SELECT_FOR_USER} WHERE o.user_id = $1 ORDER BY m.kickoff_at, t.id`, [userId]);

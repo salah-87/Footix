@@ -42,6 +42,13 @@ describe('Ticket QR code', () => {
     expect(mine.body.length).toBeGreaterThan(0);
     expect(theirs.body).toHaveLength(0);
   });
+
+  test('a ticket says where to go: stand, sector, category, row and seat', async () => {
+    const mine = await request(app).get('/api/tickets/me').set(auth(fan));
+    expect(mine.body[0]).toEqual(expect.objectContaining({
+      standName: 'Nord', sectorCode: 'N1', sectorName: 'Bloc N1', categoryCode: 'CAT1', categoryName: 'Catégorie 1',
+    }));
+  });
 });
 
 describe('Gate control', () => {
@@ -126,7 +133,7 @@ describe('Gate control', () => {
     // create a new match through the admin API, buy a seat, cancel the match, then scan
     const create = await request(app).post('/api/admin/matches').set(auth(admin)).send({
       stadiumId: 1, homeTeamId: 1, awayTeamId: 3, kickoffAt: new Date(Date.now() + 5 * 864e5).toISOString(),
-      status: 'on_sale', prices: [{ standId: 1, priceCents: 1500 }],
+      status: 'on_sale', prices: [{ categoryId: 1, priceCents: 1500 }],
     });
     expect(create.status).toBe(201);
     const matchId = create.body.id;

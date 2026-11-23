@@ -19,6 +19,6 @@ GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO footix_ap
 GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO footix_app;
 
 -- Reporting account: read only, and no access to password hashes
-GRANT SELECT ON stadiums, stands, seats, teams, matches, match_stand_prices,
-                orders, tickets TO footix_readonly;
+GRANT SELECT ON stadiums, stands, seat_categories, sectors, seats, teams, matches,
+                match_category_prices, orders, tickets TO footix_readonly;
 GRANT SELECT (id, role, created_at) ON users TO footix_readonly;

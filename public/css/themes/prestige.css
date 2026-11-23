@@ -64,17 +64,22 @@ select option { background: #fff; color: #0b1f4b; }
 .calendrier .jour { color: #7d5f17; }
 .calendrier .rencontre { font-family: var(--serif); font-stretch: normal; font-weight: 600; font-size: 1.35rem; }
 
-.stade { background: #f5f6fa; border: 1px solid #dde2ec; border-radius: 4px; box-shadow: none; }
-.terrain { background: repeating-linear-gradient(90deg, #1e5e3a 0 10%, #236a42 10% 20%); border: 2px solid #fff; box-shadow: 0 0 0 1px #1e5e3a; border-radius: 2px; }
-.terrain::before { border-left: 2px solid #fff; box-shadow: none; }
-.terrain::after { border: 2px solid #fff; box-shadow: none; }
-.tribune { background: #fff; border: 1px solid #b9c1d3; color: #0b1f4b; border-radius: 2px; }
-.tribune .nom { font-family: var(--serif); font-weight: 600; font-stretch: normal; }
-.tribune .detail { color: #5a6681; }
-.tribune:hover { background: #f2f4f9; border-color: #0b1f4b; }
-.tribune[aria-pressed="true"] { background: #0b1f4b; border-color: #0b1f4b; color: #fff; box-shadow: inset 0 -3px 0 #c5a253; }
-.tribune[aria-pressed="true"] .detail { color: #dde2ec; }
-.tribune[disabled] { background: #f5f6fa; color: #5a6681; }
+.plan-stade { background: #f5f6fa; border: 1px solid #dde2ec; border-radius: 4px; }
+.carte-stade .bloc polygon { stroke: #ffffff; }
+.carte-stade .bloc.complet polygon { fill: #e3e6ee; }
+.carte-stade .bloc[role="button"]:not([aria-disabled]):hover polygon,
+.carte-stade .bloc:focus-visible polygon { stroke: #0b1f4b; }
+.carte-stade .bloc.choisi polygon { stroke: #c5a253; }
+.carte-stade .bloc.choisi[data-category] polygon[fill="#c5a253"] { stroke: #0b1f4b; }
+.carte-stade .nom-tribune { font-family: var(--serif); font-weight: 600; fill: #5a6681; letter-spacing: 0; }
+.categorie > button, .categorie > div { background: #fff; border-color: #dde2ec; color: #0b1f4b; border-radius: 2px; }
+.categorie > button:hover { border-color: #0b1f4b; }
+.categorie > button[aria-pressed="true"] { border-color: #0b1f4b; box-shadow: inset 4px 0 0 #c5a253; background: #f5f6fa; }
+.categorie .nom { font-family: var(--serif); font-weight: 600; font-size: 1.05rem; }
+.categorie.hors-vente > div { background: transparent; border-color: #b9c1d3; }
+.info-bloc strong { color: #0b1f4b; }
+.pastille.pmr, .siege.pmr:not([disabled]):not([aria-pressed="true"]) { background: #1e6b45; box-shadow: inset 0 0 0 2px #fff, 0 0 0 1px #1e6b45; }
+.billet .categorie-billet { color: #7d5f17; }
 
 .match-entete h1 { font-family: var(--serif); font-weight: 500; font-stretch: normal; letter-spacing: -0.02em; }
 .pastille.libre { background: #3b5bab; }
@@ -87,7 +92,10 @@ select option { background: #fff; color: #0b1f4b; }
 .cote-terrain { border-top: 2px solid #1e5e3a; box-shadow: none; }
 
 .panier { background: #0b1f4b; border: 0; border-top: 3px solid #c5a253; border-radius: 4px; color: #fff; backdrop-filter: none; box-shadow: none; }
-.panier .resume { color: #c9d0e0; }
+.panier h2 { color: #fff; }
+.panier .resume, .panier .lignes .cat { color: #c9d0e0; }
+.panier .lignes li { border-top-color: #2a3d6b; }
+.panier .pied { border-top-color: #c5a253; }
 .panier .total { font-family: var(--serif); font-stretch: normal; font-weight: 600; color: #fff; }
 .panier .btn { background: #c5a253; border-color: #c5a253; color: #0b1f4b; }
 .panier .btn:hover { background: #d4b46a; border-color: #d4b46a; }

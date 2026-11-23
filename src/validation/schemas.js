@@ -15,7 +15,7 @@ const password = Joi.string()
 
 module.exports = {
   idParam: Joi.object({ id: id.required() }),
-  seatMapParams: Joi.object({ id: id.required(), standId: id.required() }),
+  seatMapParams: Joi.object({ id: id.required(), sectorId: id.required() }),
 
   register: Joi.object({
     email: email.required(),
@@ -46,9 +46,9 @@ module.exports = {
     kickoffAt: Joi.date().iso().greater('now').required(),
     status: Joi.string().valid('draft', 'on_sale').default('draft'),
     prices: Joi.array()
-      .items(Joi.object({ standId: id.required(), priceCents: Joi.number().integer().min(0).max(100000).required() }))
+      .items(Joi.object({ categoryId: id.required(), priceCents: Joi.number().integer().min(0).max(500000).required() }))
       .min(1)
-      .unique('standId')
+      .unique('categoryId')
       .required(),
   }),
 

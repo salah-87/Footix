@@ -25,21 +25,49 @@ CREATE TABLE stadiums (
     UNIQUE (name, city)
 );
 
--- A stadium is split into stands (tribunes)
+-- A stadium is split into stands (tribunes), one per side of the pitch.
+-- position tells the stadium map where to draw the stand.
 CREATE TABLE stands (
     id         SERIAL       PRIMARY KEY,
     stadium_id INTEGER      NOT NULL REFERENCES stadiums(id) ON DELETE CASCADE,
     name       VARCHAR(80)  NOT NULL,
-    UNIQUE (stadium_id, name)
+    position   VARCHAR(5)   NOT NULL CHECK (position IN ('nord', 'sud', 'est', 'ouest')),
+    UNIQUE (stadium_id, name),
+    UNIQUE (stadium_id, position)
 );
 
--- Physical seats, numbered by row and seat number inside a stand
+-- Price categories, as in the ticketing of big clubs (VIP, Cat. 1-3, kop, away fans)
+CREATE TABLE seat_categories (
+    id          SERIAL       PRIMARY KEY,
+    code        VARCHAR(12)  NOT NULL UNIQUE,         -- e.g. VIP, CAT1, KOP
+    name        VARCHAR(60)  NOT NULL,
+    description VARCHAR(255) NOT NULL,                -- what the category offers
+    color       CHAR(7)      NOT NULL CHECK (color ~ '^#[0-9A-Fa-f]{6}$'),  -- colour on the map
+    sort_order  SMALLINT     NOT NULL DEFAULT 0
+);
+
+-- A stand is cut into sectors (blocs) on several tiers. Each sector belongs to ONE category.
+CREATE TABLE sectors (
+    id             SERIAL      PRIMARY KEY,
+    stand_id       INTEGER     NOT NULL REFERENCES stands(id) ON DELETE CASCADE,
+    category_id    INTEGER     NOT NULL REFERENCES seat_categories(id),
+    code           VARCHAR(10) NOT NULL,              -- e.g. S2, NH3, LOGE1
+    name           VARCHAR(80) NOT NULL,
+    tier           VARCHAR(5)  NOT NULL CHECK (tier IN ('bas', 'loge', 'haut')),
+    position_index SMALLINT    NOT NULL CHECK (position_index > 0),  -- order along the stand
+    UNIQUE (stand_id, code),
+    UNIQUE (stand_id, tier, position_index)
+);
+CREATE INDEX sectors_category_idx ON sectors (category_id);
+
+-- Physical seats, numbered by row and seat number inside a sector
 CREATE TABLE seats (
-    id          SERIAL  PRIMARY KEY,
-    stand_id    INTEGER NOT NULL REFERENCES stands(id) ON DELETE CASCADE,
-    row_number  INTEGER NOT NULL CHECK (row_number > 0),
-    seat_number INTEGER NOT NULL CHECK (seat_number > 0),
-    UNIQUE (stand_id, row_number, seat_number)
+    id            SERIAL  PRIMARY KEY,
+    sector_id     INTEGER NOT NULL REFERENCES sectors(id) ON DELETE CASCADE,
+    row_number    INTEGER NOT NULL CHECK (row_number > 0),
+    seat_number   INTEGER NOT NULL CHECK (seat_number > 0),
+    is_accessible BOOLEAN NOT NULL DEFAULT false,     -- wheelchair space (PMR)
+    UNIQUE (sector_id, row_number, seat_number)
 );
 
 CREATE TABLE teams (
@@ -61,12 +89,14 @@ CREATE TABLE matches (
 );
 CREATE INDEX matches_kickoff_idx ON matches (kickoff_at);
 
--- Price of a stand for a given match (many-to-many with an attribute)
-CREATE TABLE match_stand_prices (
+-- Price of a category for a given match (many-to-many with an attribute).
+-- Like big clubs, prices change with the fixture. A category with no price
+-- for a match is NOT sold online for that match (e.g. away fans' section).
+CREATE TABLE match_category_prices (
     match_id    INTEGER NOT NULL REFERENCES matches(id) ON DELETE CASCADE,
-    stand_id    INTEGER NOT NULL REFERENCES stands(id),
+    category_id INTEGER NOT NULL REFERENCES seat_categories(id),
     price_cents INTEGER NOT NULL CHECK (price_cents >= 0),
-    PRIMARY KEY (match_id, stand_id)
+    PRIMARY KEY (match_id, category_id)
 );
 
 CREATE TABLE orders (

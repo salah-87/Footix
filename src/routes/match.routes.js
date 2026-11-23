@@ -16,8 +16,8 @@ router.get('/:id', validate(schemas.idParam, 'params'), asyncHandler(async (req,
   res.json(await matchService.getMatchDetails(req.params.id));
 }));
 
-router.get('/:id/stands/:standId/seats', validate(schemas.seatMapParams, 'params'), asyncHandler(async (req, res) => {
-  res.json(await matchService.getSeatMap(req.params.id, req.params.standId));
+router.get('/:id/sectors/:sectorId/seats', validate(schemas.seatMapParams, 'params'), asyncHandler(async (req, res) => {
+  res.json(await matchService.getSeatMap(req.params.id, req.params.sectorId));
 }));
 
 module.exports = router;

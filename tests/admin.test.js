@@ -11,7 +11,7 @@ beforeAll(async () => {
 const inDays = (n) => new Date(Date.now() + n * 864e5).toISOString();
 const validMatch = () => ({
   stadiumId: 1, homeTeamId: 1, awayTeamId: 2, kickoffAt: inDays(20), status: 'draft',
-  prices: [{ standId: 1, priceCents: 1800 }, { standId: 2, priceCents: 3000 }],
+  prices: [{ categoryId: 1, priceCents: 1800 }, { categoryId: 2, priceCents: 3000 }],
 });
 
 describe('Role-based access control', () => {
@@ -48,11 +48,12 @@ describe('Admin: matches', () => {
     ['same team on both sides', (m) => ({ ...m, awayTeamId: m.homeTeamId }), 422, 'SAME_TEAM'],
     ['unknown team', (m) => ({ ...m, awayTeamId: 999 }), 422, 'UNKNOWN_TEAM'],
     ['unknown stadium', (m) => ({ ...m, stadiumId: 999 }), 422, 'UNKNOWN_STADIUM'],
-    ['stand of another stadium', (m) => ({ ...m, prices: [{ standId: 4, priceCents: 1000 }] }), 422, 'INVALID_STAND'],
+    ['category with no sector in this stadium', (m) => ({ ...m, stadiumId: 2, prices: [{ categoryId: 2, priceCents: 1000 }] }), 422, 'INVALID_CATEGORY'],
+    ['category that does not exist', (m) => ({ ...m, prices: [{ categoryId: 99, priceCents: 1000 }] }), 422, 'INVALID_CATEGORY'],
     ['date in the past', (m) => ({ ...m, kickoffAt: inDays(-2) }), 400, 'VALIDATION_ERROR'],
-    ['negative price', (m) => ({ ...m, prices: [{ standId: 1, priceCents: -5 }] }), 400, 'VALIDATION_ERROR'],
+    ['negative price', (m) => ({ ...m, prices: [{ categoryId: 1, priceCents: -5 }] }), 400, 'VALIDATION_ERROR'],
     ['no prices', (m) => ({ ...m, prices: [] }), 400, 'VALIDATION_ERROR'],
-    ['same stand priced twice', (m) => ({ ...m, prices: [{ standId: 1, priceCents: 1 }, { standId: 1, priceCents: 2 }] }), 400, 'VALIDATION_ERROR'],
+    ['same category priced twice', (m) => ({ ...m, prices: [{ categoryId: 1, priceCents: 1 }, { categoryId: 1, priceCents: 2 }] }), 400, 'VALIDATION_ERROR'],
   ])('rejects %s', async (_l, mutate, status, code) => {
     const res = await request(app).post('/api/admin/matches').set(auth(admin)).send(mutate(validMatch()));
     expect(res.status).toBe(status);
@@ -119,10 +120,11 @@ describe('Admin: data for the back-office screens', () => {
     expect(res.body[0]).toEqual(expect.objectContaining({ homeTeam: expect.any(String), sold: expect.any(Number) }));
   });
 
-  test('gives stadiums with their stands, and teams', async () => {
+  test('gives stadiums with their price categories, and teams', async () => {
     const res = await request(app).get('/api/admin/reference').set(auth(admin));
     expect(res.status).toBe(200);
-    expect(res.body.stadiums.find((s) => s.name === 'Main').stands).toHaveLength(3);
+    expect(res.body.stadiums.find((s) => s.name === 'Main').categories.map((c) => c.code)).toEqual(['VIP', 'CAT1', 'VISIT']);
+    expect(res.body.stadiums.find((s) => s.name === 'Other').categories.map((c) => c.code)).toEqual(['CAT1']);
     expect(res.body.teams).toHaveLength(3);
   });
 

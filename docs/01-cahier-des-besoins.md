@@ -11,7 +11,7 @@ Un club de football amateur organise des matchs dans un stade de plusieurs tribu
 - Les données personnelles et les mots de passe sont protégés.
 
 ## 2. Périmètre
-**Dans le périmètre :** interface web (ordinateur et mobile), catalogue de matchs, plan de places par tribune, comptes utilisateurs, achat de 1 à 6 places, billets avec QR code, contrôle à l'entrée, administration des matchs, journaux d'audit et de scans.
+**Dans le périmètre :** interface web (ordinateur et mobile), catalogue de matchs, plan du stade découpé en tribunes, blocs et catégories (VIP, catégories 1 à 3, kop, parcage visiteurs, places PMR), comptes utilisateurs, achat de 1 à 6 places, billets avec QR code, contrôle à l'entrée, administration des matchs, journaux d'audit et de scans.
 
 **Hors périmètre (limites assumées) :** paiement bancaire réel (la commande est considérée comme payée), annulation et remboursement par le client, application mobile native, plan visuel du stade, envoi d'e-mails.
 
@@ -27,8 +27,9 @@ Un club de football amateur organise des matchs dans un stade de plusieurs tribu
 | N° | En tant que… | Je veux… | Afin de… |
 |---|---|---|---|
 | US1 | Visiteur | voir les matchs à venir | choisir un match |
-| US2 | Visiteur | voir le prix et la disponibilité par tribune | choisir ma tribune |
-| US3 | Visiteur | voir le plan des places d'une tribune | choisir mes places |
+| US2 | Visiteur | voir les catégories (VIP, 1, 2, 3, kop), leur prix et les places libres | choisir selon mon budget |
+| US3 | Visiteur | voir le plan du stade découpé en blocs, puis les places d'un bloc | choisir mes places |
+| US3b | Visiteur en fauteuil | savoir où sont les places PMR libres | réserver une place adaptée |
 | US4 | Visiteur | créer un compte | pouvoir acheter |
 | US5 | Visiteur | me connecter | accéder à mon espace |
 | US6 | Spectateur | acheter 1 à 6 places | assister au match |
@@ -36,7 +37,7 @@ Un club de football amateur organise des matchs dans un stade de plusieurs tribu
 | US8 | Spectateur | voir mes billets et leur QR code | entrer au stade |
 | US9 | Contrôleur | scanner un billet | autoriser l'entrée |
 | US10 | Contrôleur | savoir si un billet est accepté, déjà utilisé ou invalide | agir à la porte |
-| US11 | Administrateur | créer un match avec ses prix par tribune | ouvrir la vente |
+| US11 | Administrateur | créer un match avec ses prix par catégorie | ouvrir la vente |
 | US12 | Administrateur | publier ou annuler un match | gérer la saison |
 | US13 | Administrateur | consulter le journal d'audit | tracer les actions |
 | US14 | Administrateur | consulter le journal des scans | analyser les entrées |
@@ -45,7 +46,7 @@ Un club de football amateur organise des matchs dans un stade de plusieurs tribu
 | N° | Règle | Où elle est garantie |
 |---|---|---|
 | RG1 | Un match ne se vend que s'il est « en vente » et pas commencé | `order.service` |
-| RG2 | Une place doit exister, appartenir au stade du match et avoir un prix pour ce match | `order.repository.findSellableSeats` |
+| RG2 | Une place doit exister, appartenir au stade du match, et la catégorie de son bloc doit avoir un prix pour ce match (sinon : pas de vente en ligne, ex. parcage visiteurs) | `order.repository.findSellableSeats` |
 | RG3 | Une place ne se vend qu'une fois par match | **Base de données** : `UNIQUE (match_id, seat_id)` |
 | RG4 | Une commande est « tout ou rien » | Transaction SQL (`withTransaction`) |
 | RG5 | Maximum 6 places par commande | Validation Joi |
@@ -57,6 +58,8 @@ Un club de football amateur organise des matchs dans un stade de plusieurs tribu
 | RG11 | Mot de passe : 10 à 72 caractères, au moins une lettre et un chiffre | Validation Joi |
 | RG12 | Un utilisateur ne voit que ses propres billets | Requête SQL avec `user_id` |
 | RG13 | L'e-mail est unique sans tenir compte de la casse | Index `lower(email)` |
+| RG14 | Chaque bloc appartient à une seule catégorie ; le prix est fixé par catégorie et par match | Clés étrangères `sectors.category_id`, table `match_category_prices` |
+| RG15 | On ne peut tarifer qu'une catégorie présente dans le stade du match | `match.service.createMatch` (`INVALID_CATEGORY`) |
 
 ## 6. Exigences non fonctionnelles
 - **Sécurité :** mots de passe hachés (bcrypt), authentification par jeton signé, contrôle d'accès par rôle, validation de toutes les entrées, requêtes SQL paramétrées, secrets dans l'environnement, limitation des tentatives de connexion, en-têtes HTTP sécurisés.
@@ -83,7 +86,7 @@ Maquettes desktop et mobile, composants (siège, tribune, bouton, billet, en-tê
 
 ```mermaid
 flowchart LR
-  A[Accueil] --> M[Match : tribune puis places]
+  A[Accueil] --> M[Match : catégorie, bloc puis places]
   M -- non connecté --> C[Connexion / inscription]
   C -- sélection conservée --> M
   M -- achat --> B[Mes billets + QR code]

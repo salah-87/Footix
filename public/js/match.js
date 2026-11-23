@@ -1,5 +1,5 @@
 import { api, el, euros, dateLongue, initLayout, showMessage, getSession } from './common.js';
-import { buildStadium } from './stadium.js';
+import { buildStadium, updateStadium } from './stadium.js';
 
 initLayout('matchs');
 
@@ -7,17 +7,25 @@ const MAX_SEATS = 6;
 const message = document.getElementById('message');
 const entete = document.getElementById('entete');
 const planStade = document.getElementById('plan-stade');
+const listeCategories = document.getElementById('liste-categories');
+const infoPmr = document.getElementById('info-pmr');
 const zoneSieges = document.getElementById('sieges');
 const titreSieges = document.getElementById('titre-sieges');
+const infoBloc = document.getElementById('info-bloc');
 const resume = document.getElementById('resume');
+const lignes = document.getElementById('lignes');
 const total = document.getElementById('total');
 const acheter = document.getElementById('acheter');
 
 const matchId = Number(new URLSearchParams(location.search).get('id'));
 let details = null;
-let currentStand = null;
-const selection = new Map(); // seatId -> { standName, row, number, priceCents }
+let carte = null;              // the SVG stadium map
+let currentSector = null;      // block whose seats are shown
+let categoryFilter = null;     // category chosen in the list (null = all)
+// seatId -> { sectorId, sectorName, standName, categoryName, row, number, priceCents }
+const selection = new Map();
 const PENDING_KEY = 'footix.selection';
+const COLOR = /^#[0-9a-f]{6}$/i;
 
 // Keeps the chosen seats while the visitor logs in (the server re-checks everything at purchase).
 function savePending() {
@@ -33,43 +41,95 @@ function restorePending() {
   } catch { /* nothing to restore */ }
 }
 
-function renderStadium() {
-  const stade = buildStadium(details.stands, {
-    interactive: true,
-    selectedId: currentStand?.standId,
-    onSelect: (stand) => { currentStand = stand; renderStadium(); loadSeats(); },
-  });
-  planStade.replaceChildren(stade || el('p', {}, 'Plan indisponible pour ce stade.'));
+/** Small coloured square; the colour is set through the CSSOM (allowed by the CSP). */
+function swatch(color) {
+  const node = el('span', { class: 'pastille-cat', 'aria-hidden': 'true' });
+  if (COLOR.test(color || '')) node.style.setProperty('--cat', color);
+  return node;
 }
 
-async function loadSeats() {
-  titreSieges.textContent = `Choisissez vos places : ${currentStand.name}`;
+// --- Stadium map + categories -------------------------------------------
+function renderStadium() {
+  carte = buildStadium(details, {
+    interactive: true,
+    title: `Plan du ${details.stadium} : choisissez un bloc`,
+    onSelect: (sector) => { currentSector = sector; refreshMap(); loadSeats(true); },
+  });
+  planStade.replaceChildren(carte || el('p', {}, 'Plan indisponible pour ce stade.'));
+  refreshMap();
+}
+
+function refreshMap() {
+  if (carte) updateStadium(carte, { selectedId: currentSector?.sectorId ?? null, categoryId: categoryFilter });
+  listeCategories.querySelectorAll('button[data-category]').forEach((b) => {
+    b.setAttribute('aria-pressed', String(Number(b.dataset.category) === categoryFilter));
+  });
+}
+
+function renderCategories() {
+  listeCategories.replaceChildren(...details.categories.map((c) => {
+    const content = [
+      swatch(c.color),
+      el('span', { class: 'nom' }, c.name),
+      el('span', { class: 'prix' }, c.onSale ? euros(c.priceCents) : 'Hors vente'),
+      el('span', { class: 'desc' }, c.description),
+      el('span', { class: 'dispo' }, !c.onSale ? 'Non vendu en ligne'
+        : c.available === 0 ? 'Complet' : `${c.available} places libres`),
+    ];
+    if (!c.onSale) return el('li', { class: 'categorie hors-vente' }, el('div', {}, content));
+    return el('li', { class: 'categorie' }, el('button', {
+      type: 'button', 'data-category': c.categoryId, 'aria-pressed': 'false',
+      'aria-describedby': 'aide-categories',
+      onclick: () => { categoryFilter = categoryFilter === c.categoryId ? null : c.categoryId; refreshMap(); },
+    }, content));
+  }));
+
+  // Wheelchair spaces: where they are, so nobody has to search block by block.
+  const pmr = details.stands.flatMap((st) => st.sectors).filter((s) => s.accessibleFree > 0);
+  const nb = pmr.reduce((n, s) => n + s.accessibleFree, 0);
+  infoPmr.textContent = nb === 0
+    ? 'Plus aucune place PMR n’est libre pour ce match.'
+    : `Places PMR (fauteuil roulant) : ${nb} libres, au rang 1 des blocs ${pmr.map((s) => s.code).join(', ')}. Accès de plain-pied.`;
+}
+
+// --- Seats of one block --------------------------------------------------
+async function loadSeats(moveFocus = false) {
+  titreSieges.textContent = `${currentSector.name}, ${currentSector.standName}`;
+  infoBloc.replaceChildren();
   zoneSieges.replaceChildren(el('p', { class: 'vide' }, 'Chargement des places…'));
-  let seats;
+  let data;
   try {
-    seats = await api(`/matches/${matchId}/stands/${currentStand.standId}/seats`);
+    data = await api(`/matches/${matchId}/sectors/${currentSector.sectorId}/seats`);
   } catch (err) {
     zoneSieges.replaceChildren();
     showMessage(message, err.message, 'erreur');
     return;
   }
+  const { sector, seats } = data;
+  currentSector = { ...currentSector, ...sector };
+  infoBloc.append(swatch(sector.categoryColor),
+    el('strong', {}, sector.categoryName),
+    `, ${euros(sector.priceCents)} la place. ${sector.categoryDescription}`);
+
   // Group by row; row 1 is the closest to the pitch, so it is drawn at the bottom.
   const rows = new Map();
   for (const s of seats) {
     if (!rows.has(s.row)) rows.set(s.row, []);
     rows.get(s.row).push(s);
   }
-  const grille = el('div', { class: 'sieges', role: 'group', 'aria-label': `Places de la ${currentStand.name}` });
+  const grille = el('div', { class: 'sieges', role: 'group', 'aria-label': `Places du ${sector.name}` });
   for (const row of [...rows.keys()].sort((a, b) => b - a)) {
     const ligne = el('div', { class: 'rang' }, el('span', { class: 'num', 'aria-hidden': 'true' }, `Rang ${row}`));
     for (const s of rows.get(row)) {
+      const label = `Rang ${s.row}, place ${s.number}${s.accessible ? ', place PMR pour fauteuil roulant' : ''}${s.sold ? ', vendue' : ''}`;
       ligne.append(el('button', {
         type: 'button',
-        class: 'siege',
+        class: `siege${s.accessible ? ' pmr' : ''}`,
+        'data-seat': s.seatId,
         disabled: s.sold,
         'aria-pressed': String(selection.has(s.seatId)),
-        'aria-label': `Rang ${s.row}, place ${s.number}${s.sold ? ', vendue' : ''}`,
-        title: `Rang ${s.row}, place ${s.number}`,
+        'aria-label': label,
+        title: label,
         onclick: (e) => toggleSeat(e.currentTarget, s),
       }));
     }
@@ -77,6 +137,7 @@ async function loadSeats() {
   }
   grille.append(el('p', { class: 'cote-terrain' }, 'Côté terrain')); // same width as the seats
   zoneSieges.replaceChildren(grille);
+  if (moveFocus) titreSieges.focus({ preventScroll: false });
 }
 
 function toggleSeat(button, seat) {
@@ -88,21 +149,37 @@ function toggleSeat(button, seat) {
       showMessage(message, `Vous pouvez acheter ${MAX_SEATS} places au maximum par commande.`, 'erreur');
       return;
     }
-    selection.set(seat.seatId, { standName: currentStand.name, row: seat.row, number: seat.number, priceCents: currentStand.priceCents });
+    selection.set(seat.seatId, {
+      sectorId: currentSector.sectorId, sectorName: currentSector.name, standName: currentSector.standName,
+      categoryName: currentSector.categoryName, row: seat.row, number: seat.number,
+      accessible: seat.accessible, priceCents: currentSector.priceCents,
+    });
   }
   button.setAttribute('aria-pressed', String(selection.has(seat.seatId)));
   renderBasket();
 }
 
+function removeSeat(seatId) {
+  selection.delete(seatId);
+  zoneSieges.querySelector(`[data-seat="${seatId}"]`)?.setAttribute('aria-pressed', 'false');
+  renderBasket();
+  acheter.focus();
+}
+
+// --- Basket ---------------------------------------------------------------
 function renderBasket() {
-  const items = [...selection.values()];
-  const sum = items.reduce((acc, s) => acc + s.priceCents, 0);
-  if (items.length === 0) {
-    resume.textContent = 'Aucune place choisie.';
-  } else {
-    const places = items.map((s) => `${s.standName.replace(/^tribune\s+/i, '')} rang ${s.row} place ${s.number}`).join(', ');
-    resume.textContent = `${items.length} place${items.length > 1 ? 's' : ''} : ${places}`;
-  }
+  const items = [...selection];
+  const sum = items.reduce((acc, [, s]) => acc + s.priceCents, 0);
+  resume.textContent = items.length === 0 ? 'Aucune place choisie.'
+    : `${items.length} place${items.length > 1 ? 's' : ''} sur ${MAX_SEATS} au maximum.`;
+  lignes.replaceChildren(...items.map(([id, s]) => {
+    const where = `${s.sectorName}, rang ${s.row}, place ${s.number}`;
+    return el('li', {},
+      el('span', { class: 'ou' }, where, s.accessible ? el('span', { class: 'tag-pmr' }, 'PMR') : null),
+      el('span', { class: 'cat' }, s.categoryName),
+      el('span', { class: 'prix' }, euros(s.priceCents)),
+      el('button', { type: 'button', class: 'retirer', 'aria-label': `Retirer ${where}`, onclick: () => removeSeat(id) }, 'Retirer'));
+  }));
   total.textContent = euros(sum);
   const loggedIn = Boolean(getSession().token);
   acheter.disabled = items.length === 0;
@@ -127,8 +204,9 @@ async function buy() {
       // Refresh availability: the seats sold in the meantime become grey.
       selection.clear();
       details = await api(`/matches/${matchId}`).catch(() => details);
+      renderCategories();
       renderStadium();
-      if (currentStand) await loadSeats();
+      if (currentSector) await loadSeats();
     }
     renderBasket();
     message.focus();
@@ -153,6 +231,7 @@ async function main() {
     el('p', {}, `${details.stadium}, ${details.city}`));
   document.getElementById('achat').hidden = false;
   restorePending();
+  renderCategories();
   renderStadium();
   renderBasket();
   if (selection.size > 0) showMessage(message, 'Vos places sont toujours sélectionnées. Vous pouvez finaliser l’achat.');
