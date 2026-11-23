@@ -107,7 +107,7 @@ Les ventes continuent : les fonctions de journalisation avalent leurs erreurs. U
 ---
 ## E. Tests
 **31. Qu'as-tu testé ?**
-101 tests automatisés : authentification, validation, achat, concurrence, scan, rôles, en-têtes HTTP, limitation, journaux MongoDB, pages et CSP. Couverture de 91 % du code serveur. En plus, un parcours complet dans un vrai navigateur et un audit d'accessibilité.
+114 tests automatisés (108 Jest, 6 node:test) : authentification, validation, achat, concurrence, scan, rôles, en-têtes HTTP, limitation, journaux MongoDB, pages et CSP. Couverture de 95 % du code serveur. En plus, un parcours complet dans un vrai navigateur et un audit d'accessibilité.
 
 **32. Comment prouves-tu qu'il n'y a pas de double vente ?**
 Un test lance **15 achats simultanés** de la même place : exactement un réussit, 14 reçoivent 409, et la base ne contient qu'un seul billet.

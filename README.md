@@ -43,7 +43,8 @@ curl -s localhost:3000/api/tickets/1/qr -H "Authorization: Bearer $TOKEN"
 
 ## Tests
 ```bash
-npm test                                   # 96 tests (PostgreSQL, base footix_test)
+npm test                                   # 103 tests (PostgreSQL, base footix_test) ; 108 avec MONGO_TEST_URL
+npm run test:front                         # 6 tests unitaires des fonctions de l'interface
 MONGO_TEST_URL=mongodb://localhost:27017/footix_test npm test   # + 5 tests MongoDB = 101
 npm run test:front                         # 6 tests unitaires des fonctions du navigateur
 ```
