@@ -137,8 +137,11 @@ Toutes les données venant de l'API sont insérées avec `textContent` ou `setAt
 **39. Qu'est-ce que la CSP ?**
 Un en-tête HTTP qui dit au navigateur d'où il a le droit de charger scripts, styles, images, polices. La mienne n'autorise que mon propre serveur (`'self'`), plus les images `data:` pour le QR code, et interdit d'afficher le site dans une iframe (`frame-ancestors 'none'`).
 
-**40. Pourquoi les polices sont-elles sur ton serveur et pas chez Google Fonts ?**
-Pour la CSP (aucune source externe), pour le RGPD (Google ne reçoit pas l'adresse IP des visiteurs) et pour l'éco-conception (seulement 5 fichiers de 22 Ko).
+**40. Pourquoi la police est-elle sur ton serveur et pas chez Google Fonts ?**
+Pour la CSP (aucune source externe), pour le RGPD (Google ne reçoit pas l'adresse IP des visiteurs) et pour l'éco-conception : une seule police variable, Archivo (90 Ko), donne toutes les graisses et toutes les largeurs.
+
+**40 bis. D'où vient le style ?**
+Un soir de grand match : fond bleu nuit, surfaces en verre fumé, or réservé à ce qui compte (sélection, action principale), sièges bleu électrique, lignes du terrain lumineuses. Les maquettes, les composants et les couleurs (variables) sont dans Figma, avec le schéma d'enchaînement des écrans.
 
 **41. Où est stocké le jeton côté navigateur, et quelle est la limite ?**
 Dans `sessionStorage` : il disparaît à la fermeture de l'onglet. Limite : un script injecté pourrait le lire. Mieux : un cookie `HttpOnly` posé par le serveur.

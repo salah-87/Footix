@@ -3,6 +3,8 @@
 Site et API REST de vente de places numérotées, avec billets à QR code signé et contrôle à l'entrée.
 **Stack :** Node.js 22, Express 4, PostgreSQL 16 (données métier), MongoDB (journaux), Docker Compose, Jest + Supertest.
 
+**Design :** style « nuit de match » (bleu nuit, verre fumé, or pour la sélection, sièges bleu électrique), police Archivo hébergée sur le serveur. Maquettes desktop et mobile, composants et schéma d'enchaînement dans Figma : https://www.figma.com/design/GmLCBwxayLOTuZ1m4TA9Qq
+
 ## Démarrage rapide (Docker)
 ```bash
 cp .env.example .env        # puis modifier les deux secrets
@@ -54,7 +56,7 @@ src/routes/        HTTP (routes fines)          src/services/      règles méti
 src/repositories/  SQL uniquement               src/models/        MongoDB (journaux)
 src/middlewares/   auth, rôles, validation      src/validation/    schémas Joi
 db/                schéma, rôles, données       docs/              cahier des besoins, BDD, API, sécurité, fiches
-public/            interface web : HTML, CSS, JavaScript sans framework, polices hébergées sur le serveur
+public/            interface web : HTML, CSS, JavaScript sans framework, police Archivo hébergée sur le serveur
 ```
 ## Documentation
 `docs/01-cahier-des-besoins.md` · `02-base-de-donnees.md` · `03-api.md` · `04-securite-et-tests.md` · `fiches/revision-jury.md`

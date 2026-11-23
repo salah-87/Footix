@@ -70,6 +70,8 @@ Node.js 22 / Express 4, PostgreSQL 16 (données métier), MongoDB (journaux), Do
 Interface : HTML, CSS et JavaScript sans framework, servie par le même serveur que l'API (même origine).
 
 ## 8. Écrans et enchaînement
+Maquettes desktop et mobile, composants (siège, tribune, bouton, billet, en-tête) et variables de couleur : https://www.figma.com/design/GmLCBwxayLOTuZ1m4TA9Qq
+
 | Écran | Adresse | User stories |
 |---|---|---|
 | Accueil : prochain match, plan du stade, matchs suivants | `/` | US1 |
