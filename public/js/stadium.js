@@ -29,10 +29,10 @@ function svg(tag, attrs = {}, ...children) {
   return node;
 }
 
-const safeColor = (c) => (COLOR.test(c) ? c : '#5a6681');
+export const safeColor = (c) => (COLOR.test(c) ? c : '#5a6681');
 
 /** Dark text on light colours, white text on dark ones (WCAG relative luminance). */
-function textColor(hex) {
+export function textColor(hex) {
   const [r, g, b] = [1, 3, 5].map((i) => {
     const c = parseInt(hex.slice(i, i + 2), 16) / 255;
     return c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4;
