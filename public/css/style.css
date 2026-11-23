@@ -321,6 +321,9 @@ select option { background: var(--nuit-2); color: var(--blanc); }
   grid-row: 2; grid-column: 2; justify-self: end; font: inherit; font-size: 0.82rem; color: inherit;
   background: none; border: 0; padding: 0; text-decoration: underline; text-underline-offset: 2px; cursor: pointer;
 }
+.panier .lignes .reduit { grid-column: 1 / -1; grid-row: 3; justify-self: start; display: inline-flex; align-items: center; gap: 0.45rem; font-size: 0.85rem; margin-top: 0.35rem; cursor: pointer; }
+.panier .lignes .reduit input { width: 1.05rem; height: 1.05rem; margin: 0; accent-color: var(--or); }
+.panier .aide-reduit { font-size: 0.8rem; color: var(--gris); margin-top: 0.6rem; }
 .tag-pmr { margin-left: 0.4rem; font-size: 0.72rem; font-weight: 700; padding: 0 0.3rem; border-radius: 2px; background: var(--succes); color: #fff; }
 .panier .pied { display: flex; flex-wrap: wrap; gap: 0.75rem 1rem; align-items: center; justify-content: space-between; margin-top: 0.9rem; padding-top: 0.9rem; border-top: 1px solid rgba(255, 255, 255, 0.25); }
 .panier .total { font-stretch: 118%; font-size: 1.9rem; font-weight: 850; color: var(--blanc); }

@@ -25,6 +25,8 @@ let categoryFilter = null;     // category chosen in the list (null = all)
 // seatId -> { sectorId, sectorName, standName, categoryName, row, number, priceCents }
 const selection = new Map();
 const PENDING_KEY = 'footix.selection';
+const NO_REDUCTION = ['VIP'];                 // no reduced fare in the VIP loges (as in big clubs)
+const reducedPrice = (cents) => Math.round(cents / 2);   // display only: the server recomputes it
 const COLOR = /^#[0-9a-f]{6}$/i;
 
 // Keeps the chosen seats while the visitor logs in (the server re-checks everything at purchase).
@@ -151,8 +153,9 @@ function toggleSeat(button, seat) {
     }
     selection.set(seat.seatId, {
       sectorId: currentSector.sectorId, sectorName: currentSector.name, standName: currentSector.standName,
-      categoryName: currentSector.categoryName, row: seat.row, number: seat.number,
-      accessible: seat.accessible, priceCents: currentSector.priceCents,
+      categoryName: currentSector.categoryName, categoryCode: currentSector.categoryCode,
+      row: seat.row, number: seat.number, accessible: seat.accessible,
+      priceCents: currentSector.priceCents, reduced: false,
     });
   }
   button.setAttribute('aria-pressed', String(selection.has(seat.seatId)));
@@ -167,20 +170,39 @@ function removeSeat(seatId) {
 }
 
 // --- Basket ---------------------------------------------------------------
+const linePrice = (s) => (s.reduced ? reducedPrice(s.priceCents) : s.priceCents);
+
+/** Updates the amounts only (keeps the focus on the checkbox the user just ticked). */
+function renderTotals() {
+  for (const [id, s] of selection) {
+    const prix = lignes.querySelector(`[data-prix="${id}"]`);
+    if (prix) prix.textContent = euros(linePrice(s));
+  }
+  total.textContent = euros([...selection.values()].reduce((acc, s) => acc + linePrice(s), 0));
+}
+
 function renderBasket() {
   const items = [...selection];
-  const sum = items.reduce((acc, [, s]) => acc + s.priceCents, 0);
   resume.textContent = items.length === 0 ? 'Aucune place choisie.'
-    : `${items.length} place${items.length > 1 ? 's' : ''} sur ${MAX_SEATS} au maximum.`;
+    : `${items.length} place${items.length > 1 ? 's' : ''} sur ${MAX_SEATS} au maximum par match.`;
   lignes.replaceChildren(...items.map(([id, s]) => {
     const where = `${s.sectorName}, rang ${s.row}, place ${s.number}`;
+    const noReduction = NO_REDUCTION.includes(s.categoryCode);
+    if (noReduction) s.reduced = false;
     return el('li', {},
       el('span', { class: 'ou' }, where, s.accessible ? el('span', { class: 'tag-pmr' }, 'PMR') : null),
       el('span', { class: 'cat' }, s.categoryName),
-      el('span', { class: 'prix' }, euros(s.priceCents)),
-      el('button', { type: 'button', class: 'retirer', 'aria-label': `Retirer ${where}`, onclick: () => removeSeat(id) }, 'Retirer'));
+      el('span', { class: 'prix', 'data-prix': id }, euros(linePrice(s))),
+      el('button', { type: 'button', class: 'retirer', 'aria-label': `Retirer ${where}`, onclick: () => removeSeat(id) }, 'Retirer'),
+      noReduction ? null : el('label', { class: 'reduit' },
+        el('input', {
+          type: 'checkbox', checked: s.reduced, 'aria-describedby': 'aide-reduit',
+          onchange: (e) => { s.reduced = e.currentTarget.checked; renderTotals(); },
+        }),
+        'Tarif réduit (-50 %)'));
   }));
-  total.textContent = euros(sum);
+  document.getElementById('aide-reduit').hidden = items.length === 0;
+  renderTotals();
   const loggedIn = Boolean(getSession().token);
   acheter.disabled = items.length === 0;
   acheter.textContent = !loggedIn ? 'Se connecter pour acheter'
@@ -196,7 +218,11 @@ async function buy() {
   acheter.disabled = true;
   acheter.textContent = 'Achat en cours…';
   try {
-    const order = await api('/orders', { method: 'POST', auth: true, body: { matchId, seatIds: [...selection.keys()] } });
+    const order = await api('/orders', { method: 'POST', auth: true, body: {
+      matchId,
+      seatIds: [...selection.keys()],
+      reducedSeatIds: [...selection].filter(([, s]) => s.reduced).map(([id]) => id),
+    } });
     location.assign(`/billets?commande=${encodeURIComponent(order.id)}`);
   } catch (err) {
     showMessage(message, err.message, 'erreur');

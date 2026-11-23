@@ -65,7 +65,8 @@ async function scanTicket(token, controller) {
     throw conflict('TICKET_ALREADY_USED', 'This ticket has already been used', { usedAt: ticket.usedAt });
   }
   await log('accepted', { ticketId: ticket.id, matchId: ticket.matchId });
-  return { ticketId: ticket.id, matchId: ticket.matchId, result: 'accepted' };
+  // A reduced-fare ticket is valid, but the controller must see the proof (ID, disability card).
+  return { ticketId: ticket.id, matchId: ticket.matchId, result: 'accepted', tariff: ticket.tariff };
 }
 
 module.exports = { signTicketToken, verifyTicketToken, listMyTickets, getTicketQr, scanTicket };

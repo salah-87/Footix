@@ -12,11 +12,11 @@ Format d'erreur unique : `{ "error": { "code": "…", "message": "…", "details
 | GET | `/matches` | Public | Matchs en vente et à venir |
 | GET | `/matches/:id` | Public | Détail : catégories (prix, places libres) et tribunes avec leurs blocs (catégorie, places libres, places PMR libres) |
 | GET | `/matches/:id/sectors/:sectorId/seats` | Public | Un bloc (catégorie, prix) et ses places (libre / vendue / PMR) ; 404 `SECTOR_NOT_FOUND` si le bloc n'est pas vendu en ligne |
-| POST | `/orders` | Connecté | Acheter 1 à 6 places `{ matchId, seatIds[] }` |
+| POST | `/orders` | Connecté | Acheter 1 à 6 places `{ matchId, seatIds[], reducedSeatIds[] }` (`reducedSeatIds` : places au tarif réduit, parmi `seatIds`) |
 | GET | `/orders/me` | Connecté | Mes commandes |
 | GET | `/tickets/me` | Connecté | Mes billets |
 | GET | `/tickets/:id/qr` | Propriétaire | QR code du billet (PNG en base64) et son contenu en texte |
-| POST | `/scan` | Contrôleur, admin | Scanner un billet `{ token }` |
+| POST | `/scan` | Contrôleur, admin | Scanner un billet `{ token }` ; la réponse donne `tariff` pour faire vérifier le justificatif d'un tarif réduit |
 | GET | `/admin/matches` | Admin | Tous les matchs, quel que soit le statut, avec les billets vendus |
 | GET | `/admin/reference` | Admin | Stades avec leurs catégories (et nombre de blocs), et équipes (formulaire de création) |
 | POST | `/admin/matches` | Admin | Créer un match avec ses prix par catégorie `{ …, prices: [{ categoryId, priceCents }] }` |
@@ -35,7 +35,8 @@ Format d'erreur unique : `{ "error": { "code": "…", "message": "…", "details
 | 409 | `SEAT_ALREADY_SOLD` | Une place vient d'être vendue |
 | 409 | `MATCH_NOT_ON_SALE`, `MATCH_ALREADY_STARTED`, `MATCH_CANCELLED`, `INVALID_TRANSITION` | Règle de gestion non respectée |
 | 409 | `TICKET_ALREADY_USED`, `EMAIL_TAKEN` | Doublon |
-| 422 | `INVALID_SEATS`, `SAME_TEAM`, `UNKNOWN_TEAM`, `UNKNOWN_STADIUM`, `INVALID_CATEGORY` | Données cohérentes en forme mais invalides métier |
+| 409 | `TICKET_LIMIT_REACHED` | 6 billets déjà atteints pour ce compte et ce match (`details` : `max`, `alreadyBought`) |
+| 422 | `INVALID_SEATS`, `SAME_TEAM`, `UNKNOWN_TEAM`, `UNKNOWN_STADIUM`, `INVALID_CATEGORY`, `REDUCED_NOT_ALLOWED` | Données cohérentes en forme mais invalides métier |
 | 429 | `TOO_MANY_ATTEMPTS` | Trop de tentatives de connexion |
 | 503 | `LOGS_UNAVAILABLE` | MongoDB indisponible |
 

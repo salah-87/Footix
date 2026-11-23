@@ -52,6 +52,8 @@ const MESSAGES = {
   MATCH_ALREADY_STARTED: 'Ce match a déjà commencé : la vente est fermée.',
   SEAT_ALREADY_SOLD: 'Une de vos places vient d’être achetée par quelqu’un d’autre. Le plan est à jour : choisissez-en une autre.',
   INVALID_SEATS: 'Une des places choisies n’est pas en vente pour ce match.',
+  TICKET_LIMIT_REACHED: 'Vous avez atteint la limite de 6 billets par compte pour ce match.',
+  REDUCED_NOT_ALLOWED: 'Le tarif réduit n’existe pas en loge VIP.',
   TICKET_NOT_FOUND: 'Billet introuvable.',
   SAME_TEAM: 'Une équipe ne peut pas jouer contre elle-même.',
   UNKNOWN_TEAM: 'Une des équipes n’existe pas.',

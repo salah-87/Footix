@@ -33,7 +33,11 @@ module.exports = {
   createOrder: Joi.object({
     matchId: id.required(),
     seatIds: Joi.array().items(id).min(1).max(config.maxSeatsPerOrder).unique().required(),
-  }),
+    // Seats sold at the reduced fare: must be some of the seatIds above
+    reducedSeatIds: Joi.array().items(id).max(config.maxSeatsPerOrder).unique().default([]),
+  }).custom((value, helpers) => (
+    value.reducedSeatIds.every((s) => value.seatIds.includes(s)) ? value : helpers.message('reducedSeatIds must be part of seatIds')
+  )),
 
   scan: Joi.object({
     token: Joi.string().trim().max(2000).required(),

@@ -1,4 +1,7 @@
 'use strict';
+// This file buys one ticket per gate scenario with the same account: it needs more than
+// the 6 tickets per account and per match allowed in production (rule tested in fares-and-limits).
+process.env.MAX_TICKETS_PER_MATCH = '50';
 const jwt = require('jsonwebtoken');
 const { Pool } = require('pg');
 const { resetDb } = require('./helpers/db');

@@ -32,7 +32,7 @@ Un club de football amateur organise des matchs dans un stade de plusieurs tribu
 | US3b | Visiteur en fauteuil | savoir où sont les places PMR libres | réserver une place adaptée |
 | US4 | Visiteur | créer un compte | pouvoir acheter |
 | US5 | Visiteur | me connecter | accéder à mon espace |
-| US6 | Spectateur | acheter 1 à 6 places | assister au match |
+| US6 | Spectateur | acheter 1 à 6 places, au tarif plein ou réduit | assister au match |
 | US7 | Spectateur | voir mes commandes | suivre mes achats |
 | US8 | Spectateur | voir mes billets et leur QR code | entrer au stade |
 | US9 | Contrôleur | scanner un billet | autoriser l'entrée |
@@ -49,7 +49,7 @@ Un club de football amateur organise des matchs dans un stade de plusieurs tribu
 | RG2 | Une place doit exister, appartenir au stade du match, et la catégorie de son bloc doit avoir un prix pour ce match (sinon : pas de vente en ligne, ex. parcage visiteurs) | `order.repository.findSellableSeats` |
 | RG3 | Une place ne se vend qu'une fois par match | **Base de données** : `UNIQUE (match_id, seat_id)` |
 | RG4 | Une commande est « tout ou rien » | Transaction SQL (`withTransaction`) |
-| RG5 | Maximum 6 places par commande | Validation Joi |
+| RG5 | Maximum 6 places par commande, et 6 billets par compte et par match (plusieurs commandes ne contournent pas la limite) | Validation Joi + `order.service` (verrou `FOR UPDATE` sur l'utilisateur) |
 | RG6 | Le prix vient toujours de la base, jamais du client | `order.service` |
 | RG7 | Un billet n'est utilisable qu'une fois | `UPDATE … WHERE status='valid'` (atomique) |
 | RG8 | Un billet d'un match annulé est refusé | `ticket.service.scanTicket` |
@@ -59,6 +59,7 @@ Un club de football amateur organise des matchs dans un stade de plusieurs tribu
 | RG12 | Un utilisateur ne voit que ses propres billets | Requête SQL avec `user_id` |
 | RG13 | L'e-mail est unique sans tenir compte de la casse | Index `lower(email)` |
 | RG14 | Chaque bloc appartient à une seule catégorie ; le prix est fixé par catégorie et par match | Clés étrangères `sectors.category_id`, table `match_category_prices` |
+| RG16 | Tarif réduit à -50 % (moins de 14 ans, 65 ans et plus, handicap), calculé par le serveur, interdit en loge VIP, justificatif contrôlé à l'entrée | `order.service`, `tickets.tariff`, écran de contrôle |
 | RG15 | On ne peut tarifer qu'une catégorie présente dans le stade du match | `match.service.createMatch` (`INVALID_CATEGORY`) |
 
 ## 6. Exigences non fonctionnelles

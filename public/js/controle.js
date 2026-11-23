@@ -24,7 +24,9 @@ async function check(token) {
   showMessage(message, '');
   try {
     const res = await api('/scan', { method: 'POST', auth: true, body: { token } });
-    showVerdict(true, 'Entrée autorisée', `Billet n° ${res.ticketId} validé.`);
+    showVerdict(true, 'Entrée autorisée', res.tariff === 'reduit'
+      ? `Billet n° ${res.ticketId} validé. Tarif réduit : demandez le justificatif (âge ou carte d’invalidité).`
+      : `Billet n° ${res.ticketId} validé.`);
   } catch (err) {
     const [title, text] = REFUS[err.code] || ['Contrôle impossible', err.message];
     showVerdict(false, title, text);

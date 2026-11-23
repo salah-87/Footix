@@ -107,7 +107,7 @@ Les ventes continuent : les fonctions de journalisation avalent leurs erreurs. U
 ---
 ## E. Tests
 **31. Qu'as-tu testé ?**
-94 tests automatisés : authentification, validation, achat, concurrence, scan, rôles, en-têtes HTTP, limitation, journaux MongoDB, pages et CSP. Couverture de 91 % du code serveur. En plus, un parcours complet dans un vrai navigateur et un audit d'accessibilité.
+101 tests automatisés : authentification, validation, achat, concurrence, scan, rôles, en-têtes HTTP, limitation, journaux MongoDB, pages et CSP. Couverture de 91 % du code serveur. En plus, un parcours complet dans un vrai navigateur et un audit d'accessibilité.
 
 **32. Comment prouves-tu qu'il n'y a pas de double vente ?**
 Un test lance **15 achats simultanés** de la même place : exactement un réussit, 14 reçoivent 409, et la base ne contient qu'un seul billet.
@@ -184,3 +184,18 @@ Chaque bloc vendable a `role="button"`, `tabindex="0"`, un `aria-label` complet 
 
 **51. Pourquoi la couleur passe par `style.setProperty` alors que la CSP interdit les styles en ligne ?**
 La CSP bloque les attributs `style="…"` écrits dans le HTML. Modifier une propriété CSS en JavaScript (CSSOM) n'est pas concerné. La valeur est de toute façon contrôlée avant (format `#rrggbb`).
+
+
+## Ce que m'a appris l'étude des grands clubs (docs/05-etude-billetteries.md)
+
+**52. Comment avez-vous conçu la billetterie ?**
+J'ai étudié les sites du Real Madrid, du FC Barcelone, de Manchester City, du Bayern Munich et du PSG. Tous découpent le stade en zones et catégories, font varier le prix selon l'affiche, limitent le nombre de billets par personne et laissent le club adverse vendre le secteur visiteurs. Footix reprend ces règles à l'échelle d'un club amateur.
+
+**53. Pourquoi une limite par compte et par match, en plus de la limite par commande ?**
+Avec seulement 6 places par commande, un même compte pouvait passer plusieurs commandes. Barcelone (6), le Bayern (2) et Manchester City (1 à 4) limitent par personne et par match. Dans la transaction, je verrouille la ligne de l'utilisateur (`SELECT … FOR UPDATE`), je compte ses billets pour ce match, puis j'insère. Deux commandes envoyées en même temps par le même compte passent donc l'une après l'autre : la seconde voit les billets de la première et reçoit `409 TICKET_LIMIT_REACHED`. Un test le vérifie.
+
+**54. Pourquoi verrouiller l'utilisateur et pas la table ?**
+Verrouiller toute la table `tickets` bloquerait les achats de tout le monde. Le verrou sur une seule ligne `users` ne ralentit que les commandes du même compte.
+
+**55. Comment marche le tarif réduit ?**
+Le navigateur envoie seulement la liste des places au tarif réduit. Le serveur reprend le prix en base et le divise par deux ; il refuse le tarif réduit en loge VIP (`422 REDUCED_NOT_ALLOWED`), comme le Bayern pour ses hospitalités. Le billet garde la mention `tariff = 'reduit'` et l'écran de contrôle demande le justificatif, car on ne peut pas vérifier un âge ou un handicap en ligne.

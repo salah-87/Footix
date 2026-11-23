@@ -95,6 +95,8 @@ select option { background: #fff; color: #0b1f4b; }
 .panier h2 { color: #fff; }
 .panier .resume, .panier .lignes .cat { color: #c9d0e0; }
 .panier .lignes li { border-top-color: #2a3d6b; }
+.panier .aide-reduit { color: #c9d0e0; }
+.panier .lignes .reduit input { accent-color: #c5a253; }
 .panier .pied { border-top-color: #c5a253; }
 .panier .total { font-family: var(--serif); font-stretch: normal; font-weight: 600; color: #fff; }
 .panier .btn { background: #c5a253; border-color: #c5a253; color: #0b1f4b; }

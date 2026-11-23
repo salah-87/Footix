@@ -113,6 +113,8 @@ CREATE TABLE tickets (
     match_id    INTEGER     NOT NULL REFERENCES matches(id),
     seat_id     INTEGER     NOT NULL REFERENCES seats(id),
     price_cents INTEGER     NOT NULL CHECK (price_cents >= 0),  -- price at purchase time
+    -- 'reduit' = -50 % for under 14, 65 and over, disabled people (proof checked at the gate)
+    tariff      VARCHAR(6)  NOT NULL DEFAULT 'plein' CHECK (tariff IN ('plein', 'reduit')),
     status      VARCHAR(8)  NOT NULL DEFAULT 'valid'
                 CHECK (status IN ('valid', 'used')),
     used_at     TIMESTAMPTZ,

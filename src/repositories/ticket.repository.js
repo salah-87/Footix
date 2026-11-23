@@ -8,16 +8,16 @@ const { pool } = require('../db/pool');
  */
 async function insertMany(orderId, matchId, seats, db = pool) {
   const { rows } = await db.query(
-    `INSERT INTO tickets (order_id, match_id, seat_id, price_cents)
-     SELECT $1, $2, s.seat_id, s.price_cents
-     FROM unnest($3::int[], $4::int[]) AS s(seat_id, price_cents)
-     RETURNING id, seat_id AS "seatId", price_cents AS "priceCents", status`,
-    [orderId, matchId, seats.map((s) => s.seatId), seats.map((s) => s.priceCents)]);
+    `INSERT INTO tickets (order_id, match_id, seat_id, price_cents, tariff)
+     SELECT $1, $2, s.seat_id, s.price_cents, s.tariff
+     FROM unnest($3::int[], $4::int[], $5::text[]) AS s(seat_id, price_cents, tariff)
+     RETURNING id, seat_id AS "seatId", price_cents AS "priceCents", tariff, status`,
+    [orderId, matchId, seats.map((s) => s.seatId), seats.map((s) => s.priceCents), seats.map((s) => s.tariff)]);
   return rows;
 }
 
 const SELECT_FOR_USER = `
-  SELECT t.id, t.status, t.price_cents AS "priceCents",
+  SELECT t.id, t.status, t.price_cents AS "priceCents", t.tariff,
          m.id AS "matchId", m.kickoff_at AS "kickoffAt", m.status AS "matchStatus",
          home.name AS "homeTeam", away.name AS "awayTeam",
          st.name AS "standName", sc.code AS "sectorCode", sc.name AS "sectorName",
@@ -46,7 +46,7 @@ async function findByIdForUser(ticketId, userId, db = pool) {
 
 async function findForScan(ticketId, db = pool) {
   const { rows } = await db.query(
-    `SELECT t.id, t.match_id AS "matchId", t.status, t.used_at AS "usedAt",
+    `SELECT t.id, t.match_id AS "matchId", t.status, t.used_at AS "usedAt", t.tariff,
             m.status AS "matchStatus"
      FROM tickets t JOIN matches m ON m.id = t.match_id
      WHERE t.id = $1`, [ticketId]);

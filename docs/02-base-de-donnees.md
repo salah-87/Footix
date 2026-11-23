@@ -59,7 +59,7 @@ erDiagram
 | `matches` | `id` | `stadium_id`, `home_team_id`, `away_team_id` | `home_team_id <> away_team_id` ; `status IN (draft, on_sale, cancelled)` |
 | `match_category_prices` | `(match_id, category_id)` | `match_id`, `category_id` | `price_cents >= 0` |
 | `orders` | `id` | `user_id` | `total_cents >= 0` |
-| `tickets` | `id` | `order_id`, `match_id`, `seat_id`, `used_by` | **`UNIQUE (match_id, seat_id)`** ; `status IN (valid, used)` |
+| `tickets` | `id` | `order_id`, `match_id`, `seat_id`, `used_by` | **`UNIQUE (match_id, seat_id)`** ; `status IN (valid, used)` ; `tariff IN (plein, reduit)` |
 
 Script complet : `db/01_schema.sql`.
 

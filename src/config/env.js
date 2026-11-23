@@ -23,6 +23,8 @@ const config = {
   bcryptCost: Number(process.env.BCRYPT_COST) || 12,
   corsOrigin: process.env.CORS_ORIGIN || 'http://localhost:5500',
   maxSeatsPerOrder: Number(process.env.MAX_SEATS_PER_ORDER) || 6,
+  // Same limit per account AND per match, like big clubs (several orders cannot bypass it)
+  maxTicketsPerMatch: Number(process.env.MAX_TICKETS_PER_MATCH) || 6,
   loginRateLimitMax: Number(process.env.LOGIN_RATE_LIMIT_MAX) || 10,
 };
 
