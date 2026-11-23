@@ -16,7 +16,7 @@ const TIER_LABEL = { bas: 'anneau bas', loge: 'loges', haut: 'anneau haut' };
 const FIRST_GAP = 14;   // space between the pitch and the first tier
 const TIER_GAP = 8;     // space between two tiers
 const BLOCK_GAP = 7;    // space between two blocks of the same tier
-const FLARE = 0.5;      // the stands widen as they go up, like a bowl
+const FLARE = 0;        // flat top view: every block is a straight rectangle
 const COLOR = /^#[0-9a-f]{6}$/i;
 let uid = 0;            // unique ids for the SVG patterns (several maps per page)
 

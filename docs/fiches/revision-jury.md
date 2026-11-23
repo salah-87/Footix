@@ -177,7 +177,7 @@ Toutes les places d'un bloc ont la même catégorie. La mettre sur chaque place 
 Il n'a simplement pas de prix pour le match. La requête qui cherche les places vendables fait une jointure sur `match_category_prices` : sans prix, la place n'est pas trouvée, l'achat renvoie `422 INVALID_SEATS` et le plan du bloc renvoie `404 SECTOR_NOT_FOUND`. Aucune condition spéciale dans le code : c'est la donnée qui décide.
 
 **49. Comment est dessiné le plan ?**
-En SVG, créé en JavaScript avec `createElementNS` (jamais `innerHTML`). Chaque bloc est un polygone calculé : il s'éloigne du terrain et s'élargit à chaque anneau, comme une cuvette. La couleur vient de la catégorie, vérifiée par une expression régulière `#rrggbb` côté client et par une contrainte `CHECK` en base.
+En SVG, créé en JavaScript avec `createElementNS` (jamais `innerHTML`). Chaque bloc est un rectangle calculé : vue de dessus à plat, les anneaux s'éloignent du terrain un par un, les blocs sont alignés le long de chaque tribune. La couleur vient de la catégorie, vérifiée par une expression régulière `#rrggbb` côté client et par une contrainte `CHECK` en base.
 
 **50. Le plan est-il accessible ?**
 Chaque bloc vendable a `role="button"`, `tabindex="0"`, un `aria-label` complet (« Bloc N3, Tribune Nord, anneau bas, Catégorie 1, 45 € la place, 112 places libres, dont 2 PMR ») et réagit à Entrée et Espace. Les blocs non vendus ont `aria-disabled`. Après le choix d'un bloc, le focus passe au titre de la liste des places. Les places PMR sont annoncées « place PMR pour fauteuil roulant ». axe-core : aucune violation.
