@@ -1,4 +1,5 @@
 erDiagram
+  direction LR
   USERS ||--o{ ORDERS : "passe"
   ORDERS ||--|{ TICKETS : "contient"
   MATCHES ||--o{ TICKETS : "concerne"
@@ -28,6 +29,7 @@ erDiagram
     int match_id FK
     int seat_id FK
     int price_cents
+    string tariff
     string status
   }
   MATCHES {
