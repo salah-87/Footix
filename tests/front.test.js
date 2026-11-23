@@ -29,6 +29,8 @@ describe('Front-end served by the API', () => {
     expect((await request(app).get('/css/style.css')).status).toBe(200);
     expect((await request(app).get('/js/common.js')).headers['content-type']).toMatch(/javascript/);
     expect((await request(app).get('/fonts/archivo-variable.woff2')).status).toBe(200);
+    expect((await request(app).get('/fonts/fraunces-variable.woff2')).status).toBe(200);
+    expect((await request(app).get('/css/themes/prestige.css')).status).toBe(200);
     expect((await request(app).get('/api/nope')).body.error.code).toBe('ROUTE_NOT_FOUND');
   });
 });

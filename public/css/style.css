@@ -1,9 +1,10 @@
 /* =====================================================================
-   Footix – feuille de style « nuit de match »
-   Direction : un soir de grand match. Bleu nuit profond, verre fumé,
-   or pour ce qui compte (sélection, action), sièges bleu électrique,
-   lignes de terrain lumineuses. Une seule police variable (Archivo) :
-   large et grasse pour les titres, normale pour le texte.
+   Footix – structure, mise en page et composants (grilles, stade,
+   sièges, panier, billets, tableaux, responsive, accessibilité).
+   L'identité visuelle retenue (couleurs, polices, formes) est définie
+   dans themes/prestige.css, chargée juste après ce fichier.
+   Les valeurs ci-dessous sont celles du premier style étudié
+   (« nuit de match ») ; le thème les remplace.
    ===================================================================== */
 
 @font-face {
