@@ -1,25 +1,16 @@
 'use strict';
-const jwt = require('jsonwebtoken');
 const QRCode = require('qrcode');
 const config = require('../config/env');
 const ticketRepo = require('../repositories/ticket.repository');
 const audit = require('./audit.service');
 const { notFound, badRequest, conflict } = require('../utils/errors');
+const TicketSigner = require('../utils/TicketSigner');
 
-const ISSUER = 'footix';
+// One signer for the whole application, built with the QR code secret (see TicketSigner).
+const signer = new TicketSigner(config.ticketSecret);
 
-/**
- * The QR code contains a SIGNED token { tid: ticketId, mid: matchId }.
- * The signature proves that Footix issued it: nobody can invent a valid QR code
- * without the secret. The database then decides if it can still be used.
- */
-function signTicketToken(ticketId, matchId) {
-  return jwt.sign({ tid: ticketId, mid: matchId }, config.ticketSecret, { algorithm: 'HS256', issuer: ISSUER });
-}
-
-function verifyTicketToken(token) {
-  return jwt.verify(token, config.ticketSecret, { algorithms: ['HS256'], issuer: ISSUER });
-}
+const signTicketToken = (ticketId, matchId) => signer.sign(ticketId, matchId);
+const verifyTicketToken = (token) => signer.verify(token);
 
 const listMyTickets = (userId) => ticketRepo.listByUser(userId);
 

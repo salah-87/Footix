@@ -19,7 +19,11 @@
     "setupFiles": [
       "<rootDir>/tests/setup-env.js"
     ],
-    "testTimeout": 20000
+    "testTimeout": 20000,
+    "testPathIgnorePatterns": [
+      "/node_modules/",
+      "\\.mjs$"
+    ]
   },
   "dependencies": {
     "bcryptjs": "^3.0.3",
