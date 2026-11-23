@@ -1,0 +1,53 @@
+# Footix: API + PostgreSQL + MongoDB. Start with:  docker compose up --build
+# Secrets come from the .env file (copy .env.example). DEV defaults below are for local use only.
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: footix_owner          # owner account (creates tables); the API uses footix_app
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-footix_owner_dev}
+      POSTGRES_DB: footix
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      # Files run once, in alphabetical order, on an EMPTY database:
+      # 01_schema.sql -> 02_roles.sql -> 03_seed.sql (demo data: remove it in production)
+      - ./db:/docker-entrypoint-initdb.d:ro
+    ports:
+      - "127.0.0.1:5432:5432"              # reachable from this machine only, not from the network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U footix_owner -d footix"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  mongo:
+    image: mongo:7
+    volumes:
+      - mongodata:/data/db
+    ports:
+      - "127.0.0.1:27017:27017"
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping').ok"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  api:
+    build: .
+    depends_on:
+      postgres: { condition: service_healthy }
+      mongo:    { condition: service_healthy }
+    environment:
+      PORT: 3000
+      DATABASE_URL: postgres://footix_app:footix_app_dev@postgres:5432/footix
+      MONGO_URL: mongodb://mongo:27017/footix
+      JWT_SECRET: ${JWT_SECRET:?Set JWT_SECRET in .env}
+      TICKET_SECRET: ${TICKET_SECRET:?Set TICKET_SECRET in .env}
+      CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost:3000}
+    ports:
+      - "3000:3000"
+    restart: unless-stopped
+
+volumes:
+  pgdata:
+  mongodata:
