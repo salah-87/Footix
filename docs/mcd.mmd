@@ -1,0 +1,63 @@
+erDiagram
+  USERS ||--o{ ORDERS : "passe"
+  ORDERS ||--|{ TICKETS : "contient"
+  MATCHES ||--o{ TICKETS : "concerne"
+  SEATS ||--o{ TICKETS : "vendue via"
+  STADIUMS ||--|{ STANDS : "divisé en"
+  STANDS ||--|{ SEATS : "contient"
+  STADIUMS ||--o{ MATCHES : "accueille"
+  TEAMS ||--o{ MATCHES : "reçoit / se déplace"
+  MATCHES ||--|{ MATCH_STAND_PRICES : "fixe un tarif"
+  STANDS ||--o{ MATCH_STAND_PRICES : "est tarifée"
+  USERS {
+    int id PK
+    string email UK
+    string password_hash
+    string role
+  }
+  ORDERS {
+    int id PK
+    int user_id FK
+    int total_cents
+  }
+  TICKETS {
+    int id PK
+    int order_id FK
+    int match_id FK
+    int seat_id FK
+    int price_cents
+    string status
+  }
+  MATCHES {
+    int id PK
+    int stadium_id FK
+    int home_team_id FK
+    int away_team_id FK
+    datetime kickoff_at
+    string status
+  }
+  SEATS {
+    int id PK
+    int stand_id FK
+    int row_number
+    int seat_number
+  }
+  STANDS {
+    int id PK
+    int stadium_id FK
+    string name
+  }
+  STADIUMS {
+    int id PK
+    string name
+    string city
+  }
+  TEAMS {
+    int id PK
+    string name UK
+  }
+  MATCH_STAND_PRICES {
+    int match_id PK
+    int stand_id PK
+    int price_cents
+  }
