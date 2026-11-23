@@ -8,6 +8,7 @@ COPY package*.json ./
 RUN npm ci --omit=dev
 
 COPY src ./src
+COPY public ./public
 
 # Never run as root inside the container
 USER node
