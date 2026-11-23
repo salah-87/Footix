@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Contrôle à l’entrée | Footix</title>
+  <meta name="description" content="Validez les billets à l’entrée du stade.">
+  <link rel="preload" href="/fonts/archivo-variable.woff2" as="font" type="font/woff2" crossorigin>
+  <meta name="theme-color" content="#070b1a">
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <a class="skip-link" href="#contenu">Aller au contenu</a>
+  <header class="site-header">
+    <div class="wrap">
+      <a class="logo" href="/">Footix</a>
+      <nav class="site-nav" aria-label="Navigation principale">
+        <ul>
+          <li><a href="/" data-page="matchs">Matchs</a></li>
+          <li data-role="connecte" hidden><a href="/billets" data-page="billets">Mes billets</a></li>
+          <li data-role="controle" hidden><a href="/controle" data-page="controle">Contrôle</a></li>
+          <li data-role="admin" hidden><a href="/admin" data-page="admin">Administration</a></li>
+          <li data-role="anonyme"><a href="/connexion" data-page="connexion">Se connecter</a></li>
+          <li data-role="connecte" hidden><span class="who" id="qui"></span></li>
+          <li data-role="connecte" hidden><button type="button" id="deconnexion">Se déconnecter</button></li>
+        </ul>
+      </nav>
+    </div>
+  </header>
+  <main id="contenu" tabindex="-1">
+    <div class="wrap">
+      <h1>Contrôle à l’entrée</h1>
+      <p id="message" class="message" role="status" tabindex="-1"></p>
+      <form id="form-scan" class="panneau">
+        <div class="field">
+          <label for="code">Code du billet</label>
+          <input id="code" name="code" autocomplete="off" spellcheck="false" aria-describedby="aide-code">
+          <span class="aide" id="aide-code">Scannez le QR code avec un lecteur, ou collez le code puis appuyez sur Entrée.</span>
+        </div>
+        <button class="btn" type="submit">Valider le billet</button>
+        <div id="camera" class="camera" hidden></div>
+      </form>
+      <div id="verdict" class="verdict" role="status" aria-live="assertive" hidden></div>
+    </div>
+  </main>
+  <footer class="site-footer">
+    <div class="wrap">
+      <p>Footix, billetterie du Stade Municipal de Limoges. Projet de formation : les paiements sont simulés.</p>
+    </div>
+  </footer>
+  <script type="module" src="/js/controle.js"></script>
+</body>
+</html>

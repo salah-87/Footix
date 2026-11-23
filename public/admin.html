@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Administration | Footix</title>
+  <meta name="description" content="Gérez les matchs et consultez le journal d’activité.">
+  <link rel="preload" href="/fonts/archivo-variable.woff2" as="font" type="font/woff2" crossorigin>
+  <meta name="theme-color" content="#070b1a">
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <a class="skip-link" href="#contenu">Aller au contenu</a>
+  <header class="site-header">
+    <div class="wrap">
+      <a class="logo" href="/">Footix</a>
+      <nav class="site-nav" aria-label="Navigation principale">
+        <ul>
+          <li><a href="/" data-page="matchs">Matchs</a></li>
+          <li data-role="connecte" hidden><a href="/billets" data-page="billets">Mes billets</a></li>
+          <li data-role="controle" hidden><a href="/controle" data-page="controle">Contrôle</a></li>
+          <li data-role="admin" hidden><a href="/admin" data-page="admin">Administration</a></li>
+          <li data-role="anonyme"><a href="/connexion" data-page="connexion">Se connecter</a></li>
+          <li data-role="connecte" hidden><span class="who" id="qui"></span></li>
+          <li data-role="connecte" hidden><button type="button" id="deconnexion">Se déconnecter</button></li>
+        </ul>
+      </nav>
+    </div>
+  </header>
+  <main id="contenu" tabindex="-1">
+    <div class="wrap">
+      <h1>Administration</h1>
+      <p id="message" class="message" role="status" tabindex="-1"></p>
+      <div id="contenu-admin">
+        <section class="panneau" aria-labelledby="titre-creer">
+          <h2 id="titre-creer">Créer un match</h2>
+          <form id="form-match">
+            <div class="prix-tribunes">
+              <div class="field"><label for="stade">Stade</label><select id="stade" required></select></div>
+              <div class="field"><label for="domicile">Équipe qui reçoit</label><select id="domicile" required></select></div>
+              <div class="field"><label for="exterieur">Équipe visiteuse</label><select id="exterieur" required></select></div>
+              <div class="field"><label for="coup-envoi">Coup d’envoi</label><input id="coup-envoi" type="datetime-local" required></div>
+              <div class="field"><label for="statut">Statut</label>
+                <select id="statut" aria-describedby="aide-statut"><option value="draft">Brouillon</option><option value="on_sale">En vente</option></select>
+                <span class="aide" id="aide-statut">Un brouillon reste invisible du public.</span></div>
+            </div>
+            <fieldset>
+              <legend>Prix par tribune</legend>
+              <div id="prix-tribunes" class="prix-tribunes"></div>
+            </fieldset>
+            <button class="btn" type="submit">Créer le match</button>
+          </form>
+        </section>
+        <section class="section defile" aria-labelledby="titre-matchs">
+          <table class="tableau">
+            <caption id="titre-matchs">Tous les matchs</caption>
+            <thead><tr><th scope="col">Match</th><th scope="col">Coup d’envoi</th><th scope="col">Statut</th><th scope="col">Billets vendus</th><th scope="col">Actions</th></tr></thead>
+            <tbody id="matchs-admin"></tbody>
+          </table>
+        </section>
+        <section class="section defile" aria-labelledby="titre-journal">
+          <table class="tableau">
+            <caption id="titre-journal">Journal d’activité (MongoDB)</caption>
+            <thead><tr><th scope="col">Date</th><th scope="col">Action</th><th scope="col">Auteur</th><th scope="col">Détail</th></tr></thead>
+            <tbody id="journal"></tbody>
+          </table>
+          <p id="journal-message" class="message" role="status"></p>
+        </section>
+      </div>
+    </div>
+  </main>
+  <footer class="site-footer">
+    <div class="wrap">
+      <p>Footix, billetterie du Stade Municipal de Limoges. Projet de formation : les paiements sont simulés.</p>
+    </div>
+  </footer>
+  <script type="module" src="/js/admin.js"></script>
+</body>
+</html>

@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Choisir mes places | Footix</title>
+  <meta name="description" content="Choisissez votre tribune et vos places numérotées.">
+  <link rel="preload" href="/fonts/archivo-variable.woff2" as="font" type="font/woff2" crossorigin>
+  <meta name="theme-color" content="#070b1a">
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <a class="skip-link" href="#contenu">Aller au contenu</a>
+  <header class="site-header">
+    <div class="wrap">
+      <a class="logo" href="/">Footix</a>
+      <nav class="site-nav" aria-label="Navigation principale">
+        <ul>
+          <li><a href="/" data-page="matchs">Matchs</a></li>
+          <li data-role="connecte" hidden><a href="/billets" data-page="billets">Mes billets</a></li>
+          <li data-role="controle" hidden><a href="/controle" data-page="controle">Contrôle</a></li>
+          <li data-role="admin" hidden><a href="/admin" data-page="admin">Administration</a></li>
+          <li data-role="anonyme"><a href="/connexion" data-page="connexion">Se connecter</a></li>
+          <li data-role="connecte" hidden><span class="who" id="qui"></span></li>
+          <li data-role="connecte" hidden><button type="button" id="deconnexion">Se déconnecter</button></li>
+        </ul>
+      </nav>
+    </div>
+  </header>
+  <main id="contenu" tabindex="-1">
+    <div class="wrap">
+      <div id="entete" class="match-entete"></div>
+      <p id="message" class="message" role="status" tabindex="-1"></p>
+      <div id="achat" class="match-grille" hidden>
+        <section aria-labelledby="titre-tribune">
+          <h2 id="titre-tribune">Choisissez une tribune</h2>
+          <p>Le prix et le nombre de places libres sont indiqués sur chaque tribune.</p>
+          <div id="plan-stade"></div>
+        </section>
+        <section aria-labelledby="titre-sieges">
+          <h2 id="titre-sieges">Choisissez vos places</h2>
+          <ul class="legende" aria-label="Légende">
+            <li><span class="pastille libre" aria-hidden="true"></span>Libre</li>
+            <li><span class="pastille choisie" aria-hidden="true"></span>Votre choix</li>
+            <li><span class="pastille vendue" aria-hidden="true"></span>Vendue</li>
+          </ul>
+          <div id="sieges"><p class="vide">Sélectionnez d’abord une tribune sur le plan.</p></div>
+          <div class="panier">
+            <div>
+              <p class="resume" id="resume" aria-live="polite">Aucune place choisie.</p>
+              <p class="total" id="total">0,00 €</p>
+            </div>
+            <button type="button" class="btn" id="acheter" disabled>Acheter</button>
+          </div>
+        </section>
+      </div>
+    </div>
+  </main>
+  <footer class="site-footer">
+    <div class="wrap">
+      <p>Footix, billetterie du Stade Municipal de Limoges. Projet de formation : les paiements sont simulés.</p>
+    </div>
+  </footer>
+  <script type="module" src="/js/match.js"></script>
+</body>
+</html>
